@@ -2,7 +2,7 @@
 
 PS5 homebrew: jailbreak UI on port **1022**. Chains: **umtx2** (1–5.xx), **relapse** (7.00–13.60).
 
-Current release: **[v1.00](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/tag/v1.00)** — download `installer.elf`.
+Current release: **[v1.0.0](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/tag/v1.0.0)** — download `installer.elf`.
 
 ## Screenshots
 
@@ -21,7 +21,7 @@ Current release: **[v1.00](https://github.com/X-F1REBALL-X/wk-autoloader-relapse
 
 ## Use
 
-1. Download `installer.elf` from **[v1.00](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/tag/v1.00)**.
+1. Download `installer.elf` from **[v1.0.0](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/tag/v1.0.0)**.
 2. Send it to elfldr (`9021`).
 3. Open the home icon or `http://PS5_IP:1022`.
 4. Pick **Payload Manager** (`:8084`) or **Elf Launcher** (`:1000`), then **Start Jailbreak**.

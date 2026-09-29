@@ -100,23 +100,14 @@
       var overlay=document.createElement('div'); overlay.id='cacheCorruptOverlay';
       var card=document.createElement('div'); card.className='card';
       var title=document.createElement('h2'); var msg=document.createElement('p'); var actions=null;
-      var path='/user/home/'+(currentUid||'<userid>')+'/webkit/shell/';
       if(isRetry){
         title.textContent='Cache issue persists';
         msg.textContent='Close the page and run the installer again.';
         var ex=new XMLHttpRequest(); ex.open('GET','/exit',true); ex.send();
       } else {
         title.textContent='WebKit cache appears corrupted';
-        msg.textContent='Clearing browser data may fix this. ';
-        var strong=document.createElement('strong'); strong.textContent='Removes data in '+path+'.';
-        msg.appendChild(strong);
+        msg.textContent='Close the page and run again. Use Clear Cache in the WK Autoloader app if needed.';
         actions=document.createElement('div');
-        var clearBtn=document.createElement('button'); clearBtn.className='btn primary'; clearBtn.textContent='Clear & Retry';
-        clearBtn.addEventListener('click',function(){
-          actions.hidden=true; msg.textContent='Clearing…';
-          var x=new XMLHttpRequest(); x.open('GET','/clear-webkit-data',true); x.timeout=30000; x.send();
-        });
-        actions.appendChild(clearBtn);
         var cancelBtn=document.createElement('button'); cancelBtn.className='btn secondary'; cancelBtn.textContent='Cancel';
         cancelBtn.addEventListener('click',function(){
           msg.textContent='Close the page'; actions.hidden=true;
