@@ -87,6 +87,7 @@
       stopElapsed();
       if(progressTimer){ clearInterval(progressTimer); progressTimer=0; }
       if(statusPoll){ clearInterval(statusPoll); statusPoll=0; }
+      if(cacheWaitTimer){ clearTimeout(cacheWaitTimer); cacheWaitTimer=0; }
       try{document.body.className='done'}catch(e){}
       var from=progressPctVal,start=Date.now();
       var anim=setInterval(function(){
@@ -105,8 +106,8 @@
     }
     function setCaching(){ refreshStatus(); }
     function goToAutoloader(){ window.location.replace(AUTOLOADER_URL); }
-    /* Dual-gate: open /app only when BOTH /install 200 and AppCache ready.
-       Never soft-timeout into /app without cacheOk (aborts incomplete cache). */
+    /* Open /app when BOTH /install 200 and AppCache settled (or waited out).
+       Soft bar may sit at SOFT_CAP while finishing offline cache. */
     function tryOpen(){
       if(completed) return;
       if(!(installOk && cacheOk)){ refreshStatus(); return; }
@@ -117,7 +118,21 @@
       if(cacheOk) return;
       cacheOk=true;
       if(statusPoll){ clearInterval(statusPoll); statusPoll=0; }
+      if(cacheWaitTimer){ clearTimeout(cacheWaitTimer); cacheWaitTimer=0; }
       tryOpen();
+    }
+    /* After /install succeeds, do not hang forever on missing AppCache events.
+       Match classic wait: IDLE/UPDATEREADY poll + terminal events + max wait. */
+    var CACHE_MAX_MS=25000;
+    var cacheWaitTimer=0;
+    function armCacheMaxWait(){
+      if(cacheWaitTimer||cacheOk||completed) return;
+      cacheWaitTimer=setTimeout(function(){
+        cacheWaitTimer=0;
+        if(completed||cacheOk) return;
+        /* Events never fired — still open live /app once install is done. */
+        markCacheOk();
+      }, CACHE_MAX_MS);
     }
     /* Best-effort /version for uid only — never gates /install. */
     function probeServer(){
@@ -139,13 +154,15 @@
       setCaching();
       var xhr=new XMLHttpRequest();
       /* Install can take ~30s on console; 30s timeout raced success.
-         Allow 2 minutes. Do NOT navigate on 200 — wait for cacheOk. */
+         Allow 2 minutes. Do NOT navigate on 200 alone — wait for cacheOk
+         (events / IDLE poll / CACHE_MAX_MS after installOk). */
       xhr.open('GET','/install',true); xhr.timeout=120000;
       xhr.onreadystatechange=function(){
         if(xhr.readyState===4){
           installInFlight=false;
           if(xhr.status===200){
             installOk=true;
+            armCacheMaxWait();
             tryOpen();
           } else {
             setCaching(); setTimeout(installApp,1500);
@@ -158,8 +175,7 @@
       xhr.send();
     }
     /* Soft fill: climb continuously to 97 while waiting OR installing —
-       NEVER hold at 88. Both gates → setInstalled snaps to 100.
-       Soft progress must NOT navigate without cacheOk. */
+       NEVER hold at 88. Both gates → setInstalled snaps to 100. */
     var softPct=2;
     function startProgressDriver(){
       if(progressTimer) return;
@@ -182,12 +198,14 @@
       /* /install immediately — do not wait on /version or AppCache. */
       installApp();
       probeServer();
-      /* AppCache: mark cacheOk on terminal success events. No swapCache.
-         Status poll backup for IDLE/UPDATEREADY. No soft-timeout → /app. */
+      /* AppCache settle: terminal events + IDLE/UPDATEREADY status poll +
+         applicationCache.update() kick on error/obsolete (no cache swap).
+         CACHE_MAX_MS after installOk opens /app if events never fire. */
       if(typeof applicationCache==='undefined'){
         cacheOk=true;
         tryOpen();
       } else {
+        try{ applicationCache.update(); }catch(eU){}
         applicationCache.addEventListener('progress',function(e){
           if(e&&e.lengthComputable&&e.total>0){
             var p=Math.min(SOFT_CAP,8+Math.floor((e.loaded/e.total)*89));
@@ -201,11 +219,13 @@
         applicationCache.addEventListener('updateready',function(){ markCacheOk(); },false);
         applicationCache.addEventListener('error',function(){
           setCaching();
+          try{ applicationCache.update(); }catch(e){}
         },false);
         applicationCache.addEventListener('obsolete',function(){
           setCaching();
+          try{ applicationCache.update(); }catch(e){}
         },false);
-        /* Short status poll backup — IDLE/UPDATEREADY mean cache settled. */
+        /* Status poll — IDLE / UPDATEREADY mean cache settled. */
         statusPoll=setInterval(function(){
           if(completed||cacheOk){ clearInterval(statusPoll); statusPoll=0; return; }
           try{

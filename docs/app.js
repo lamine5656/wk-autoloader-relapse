@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  /* Release tree marker: v1.0.3. */
+  /* Release tree marker: v1.0.4. */
 
   var splashEl = document.getElementById('splash');
   var loaderEl = document.getElementById('loader');
