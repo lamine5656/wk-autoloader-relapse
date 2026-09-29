@@ -24,13 +24,6 @@
     body.done #progressBar{-webkit-transform:scaleX(1)!important;transform:scaleX(1)!important;background:linear-gradient(90deg,#15803d,#16a34a,#22c55e,#86efac)!important;box-shadow:0 0 14px rgba(34,197,94,.55)!important}
     #footer{position:fixed;left:0;right:0;bottom:12px;text-align:center;font-size:16px;color:#fff;letter-spacing:.08em;pointer-events:none;text-shadow:0 0 12px rgba(255,255,255,.35);z-index:20}
     #footer b{color:#fff;font-weight:600}
-    #cacheCorruptOverlay{position:fixed;inset:0;z-index:50;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;background:rgba(0,0,0,.72);padding:24px}
-    #cacheCorruptOverlay .card{max-width:420px;width:100%;padding:22px 18px;border-radius:14px;background:rgba(8,12,20,.92);border:1px solid rgba(255,255,255,.2);color:#fff;text-align:center}
-    #cacheCorruptOverlay h2{font-size:18px;margin-bottom:10px}
-    #cacheCorruptOverlay p{font-size:14px;color:#e5e5e5;line-height:1.4;margin-bottom:14px}
-    #cacheCorruptOverlay .btn{display:inline-block;margin:6px;padding:10px 14px;border:0;border-radius:8px;font-size:14px;font-weight:700}
-    #cacheCorruptOverlay .btn.primary{background:#2a9fff;color:#fff}
-    #cacheCorruptOverlay .btn.secondary{background:#334155;color:#e2e8f0}
   </style>
 </head>
 <body>
@@ -48,7 +41,7 @@
     var statusEl=document.getElementById('status');
     var progressBar=document.getElementById('progressBar');
     var progressPct=document.getElementById('progressPct');
-    var completed=false,isDownloading=false,isRetry=false,currentUid='',simulateCorrupt=false,corruptionPromptShown=false,probeOk=false;
+    var completed=false,isDownloading=false,isRetry=false,currentUid='',simulateCorrupt=false,cacheRecoverStarted=false,probeOk=false;
     var AUTOLOADER_URL='/app/index.html';
     (function(){
       var p=new URLSearchParams(window.location.search);
@@ -94,32 +87,27 @@
       xhr.send();
     }
     function maybeInstall(){ if(completed) return; completed=true; installApp(); }
-    function setCacheCorrupted(){
-      if(corruptionPromptShown) return;
-      corruptionPromptShown=true; completed=true;
-      var overlay=document.createElement('div'); overlay.id='cacheCorruptOverlay';
-      var card=document.createElement('div'); card.className='card';
-      var title=document.createElement('h2'); var msg=document.createElement('p'); var actions=null;
+    /* Cache errors stay internal: auto clear+retry once, else proceed with install. No modal/banner. */
+    function silentCacheRecover(){
+      if(cacheRecoverStarted) return;
+      cacheRecoverStarted=true;
       if(isRetry){
-        title.textContent='Cache issue persists';
-        msg.textContent='Close the page and run the installer again.';
-        var ex=new XMLHttpRequest(); ex.open('GET','/exit',true); ex.send();
-      } else {
-        title.textContent='WebKit cache appears corrupted';
-        msg.textContent='Close the page and run again. Use Clear Cache in the WK Autoloader app if needed.';
-        actions=document.createElement('div');
-        var cancelBtn=document.createElement('button'); cancelBtn.className='btn secondary'; cancelBtn.textContent='Cancel';
-        cancelBtn.addEventListener('click',function(){
-          msg.textContent='Close the page'; actions.hidden=true;
-          var x=new XMLHttpRequest(); x.open('GET','/exit',true); x.send();
-        });
-        actions.appendChild(cancelBtn);
+        /* Already cleared once — do not block installation. */
+        maybeInstall();
+        return;
       }
-      card.appendChild(title); card.appendChild(msg); if(actions) card.appendChild(actions);
-      overlay.appendChild(card); document.body.appendChild(overlay);
+      setCaching();
+      var x=new XMLHttpRequest();
+      x.open('GET','/clear-webkit-data',true);
+      x.timeout=30000;
+      x.onreadystatechange=function(){
+        if(x.readyState===4 && x.status!==200) maybeInstall();
+      };
+      x.onerror=x.ontimeout=function(){ maybeInstall(); };
+      x.send();
     }
     window.addEventListener('load',function(){
-      if(simulateCorrupt){ isDownloading=true; setCacheCorrupted(); return; }
+      if(simulateCorrupt){ isDownloading=true; silentCacheRecover(); return; }
       setCaching(); setProgress(2); probeServer();
       var soft=2;
       var softTimer=setInterval(function(){
@@ -141,8 +129,8 @@
         applicationCache.addEventListener('cached',function(){ maybeInstall(); },false);
         applicationCache.addEventListener('updateready',function(){ maybeInstall(); },false);
         applicationCache.addEventListener('noupdate',function(){ maybeInstall(); },false);
-        applicationCache.addEventListener('error',function(){ if(isDownloading) setCacheCorrupted(); },false);
-        applicationCache.addEventListener('obsolete',function(){ setCacheCorrupted(); },false);
+        applicationCache.addEventListener('error',function(){ if(isDownloading) silentCacheRecover(); },false);
+        applicationCache.addEventListener('obsolete',function(){ silentCacheRecover(); },false);
       }
       setTimeout(function(){ if(document.body.className!=='done'&&probeOk) maybeInstall(); },45000);
     });
