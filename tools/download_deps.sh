@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Release tree marker: v1.0.0
 # Download the shared ps5-elfldr ELF, the ps5-unified-autoloader payload
 # ELF, and the optional elf-launcher ELF from their GitHub releases.
 #

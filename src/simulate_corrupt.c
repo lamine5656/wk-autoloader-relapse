@@ -1,3 +1,4 @@
+/* Release tree marker: v1.0.0. */
 #include "simulate_corrupt.h"
 
 #if defined(WKALI_SIMULATE_CACHE_CORRUPTION) && WKALI_SIMULATE_CACHE_CORRUPTION > 0

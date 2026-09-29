@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  /* Release tree marker: v1.0.0. */
+
   var splashEl = document.getElementById('splash');
   var loaderEl = document.getElementById('loader');
   var logContainer = document.getElementById('logContainer');
