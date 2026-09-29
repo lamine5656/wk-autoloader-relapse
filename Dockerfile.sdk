@@ -1,5 +1,5 @@
 # Dockerfile to build the ps5-payload-dev/sdk environment locally
-# Release tree marker: v1.0.5
+# Release tree marker: v1.0.0
 FROM ubuntu:24.04
 
 # Install dependencies

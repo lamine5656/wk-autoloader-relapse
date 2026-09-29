@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Dependency build script for the PS5 Payload SDK inside Docker (libmicrohttpd only)
-# Release tree marker: v1.0.5
+# Release tree marker: v1.0.0
 set -e
 
 export PATH="/opt/ps5-payload-sdk/bin:$PATH"

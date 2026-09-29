@@ -4,7 +4,7 @@ A zero-dependency Python script that turns your PC into a local DNS + HTTPS
 server for the PS5 WebKit Autoloader. No `pip install` required - only the
 Python 3 standard library.
 
-> Release tree marker: **v1.0.5**.
+> Release tree marker: **v1.0.0**.
 
 ## What it does
 
