@@ -68,21 +68,21 @@
 
       /* __complete__ is the LAST entry of the AppCache manifest, so if it is
          present (with our version content) every file before it was downloaded.
-         Only then point at the app. If the marker is missing, this fetch falls
-         back to this very page (content mismatch) or errors - never redirect
-         into a partially cached directory. */
-      fetch('/app/' + dir + '/__complete__')
-        .then(function (r) {
-          return r.text();
-        })
-        .then(function (t) {
-          if (t.trim() === version) {
-            window.location.replace('/app/' + dir + '/index.html');
-          } else {
-            fail();
-          }
-        })
-        .catch(fail);
+         Only then point at the app. Use XHR (not fetch): PS5 WebKit AppCache
+         + home deeplink is more reliable with XHR when :1022 is offline. */
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/app/' + dir + '/__complete__', true);
+      xhr.timeout = 4000;
+      xhr.onload = function () {
+        var t = (xhr.responseText || '').trim();
+        if (xhr.status === 200 && t === version) {
+          window.location.replace('/app/' + dir + '/index.html');
+        } else {
+          fail();
+        }
+      };
+      xhr.onerror = xhr.ontimeout = fail;
+      xhr.send();
     })();
   </script>
 </body>

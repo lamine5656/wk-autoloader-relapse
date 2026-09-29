@@ -565,10 +565,13 @@
   function openElfLauncherPage() {
     if (launcherHttpOpenStarted) return;
     launcherHttpOpenStarted = true;
-    /* elf-launcher closes this WebKit and opens a FRESH browser itself via
-       ShellUIUtil + sceSystemServiceLaunchWebBrowser. Do not navigate this
-       post-JB process to :1000 or pshomeui; that paints a broken page. */
-    uiLog('Opening a fresh browser to elf-launcher :1000 ...', 'success');
+    /* elf-launcher also launches a fresh browser to :1000, but WKAL must not
+       rely on that alone — after a successful send, poll until the :1000 UI
+       document is ready then top.location.replace the clean home URL (same as
+       the elf-launcher home icon). Cache-bust query strings break asset loads. */
+    uiLog('elf-launcher sent - opening :1000 when ready ...', 'success');
+    openWhenHttpReady(consoleHttpBase(1000), 'elf-launcher', '1000',
+      20000, 2500, 800, true);
   }
 
   function openPayloadManagerPage() {
