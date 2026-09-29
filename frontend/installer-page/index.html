@@ -1,145 +1,181 @@
 <!doctype html>
 <html lang="en" manifest="/cache.appcache">
 <head>
-  <!-- Release tree marker: v1.0.1 -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="preload" href="/installer-hero.jpg?v=022" as="image" />
+  <link rel="preload" href="/installer-hero.jpg?v=023" as="image" />
   <title>WK Autoloader v[[VERSION_PLACEHOLDER]]</title>
   <style>
     *{margin:0;padding:0;-webkit-box-sizing:border-box;box-sizing:border-box}
     html,body{height:100%}
-    body{font-family:"Segoe UI",system-ui,sans-serif;background:#000;color:#fff;min-height:100%;overflow:hidden;text-align:center}
-    #bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:#000 url("/installer-hero.jpg?v=022") center center/cover no-repeat}
-    #bg:after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none}
-    main{position:relative;z-index:2;height:100%;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;-webkit-box-align:center;-webkit-align-items:center;align-items:center;-webkit-box-pack:start;-webkit-justify-content:flex-start;justify-content:flex-start;gap:10px;padding:48vh 20px 80px;background:transparent}
-    #status{margin:0 0 8px;color:#fff;font-size:18px;font-weight:700;letter-spacing:.04em;text-shadow:0 0 12px rgba(255,255,255,.4)}
-    #progressWrap{width:min(420px,78vw);height:14px;margin-top:12px;border-radius:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);overflow:hidden;position:relative;box-shadow:0 0 18px rgba(255,255,255,.12)}
-    #progressBar{position:absolute;top:0;left:0;height:100%;width:100%;background:linear-gradient(90deg,#e8e8e8,#fff,#f5f5f5);-webkit-transform:scaleX(0);transform:scaleX(0);-webkit-transform-origin:left center;transform-origin:left center;-webkit-transition:-webkit-transform .85s cubic-bezier(.22,1,.36,1),background .35s ease;transition:transform .85s cubic-bezier(.22,1,.36,1),background .35s ease;box-shadow:0 0 14px rgba(255,255,255,.45)}
+    body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:#000;color:#2a9fff;min-height:100%;overflow:hidden;text-align:center}
+    #bg{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;background:#000 url("/installer-hero.jpg?v=023") center center/cover no-repeat}
+    #bg:after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.38);pointer-events:none}
+    main{position:relative;z-index:2;height:100%;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;-webkit-box-align:center;-webkit-align-items:center;align-items:center;-webkit-box-pack:start;-webkit-justify-content:flex-start;justify-content:flex-start;gap:12px;padding:46vh 24px 88px;background:transparent;box-sizing:border-box}
+    #statusMsg{margin:0 0 8px;color:#fff;font-size:22px;font-weight:700;letter-spacing:.06em;text-shadow:0 0 12px rgba(255,255,255,.4)}
+    #progressContainer{width:min(420px,78vw);height:14px;margin-top:12px;border-radius:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);overflow:hidden;position:relative;-webkit-box-shadow:0 0 18px rgba(255,255,255,.12);box-shadow:0 0 18px rgba(255,255,255,.12)}
+    #progressBar{position:absolute;top:0;left:0;height:100%;width:100%;background:#fff;background:-webkit-linear-gradient(90deg,#e8e8e8 0%,#fff 50%,#f5f5f5 100%);background:linear-gradient(90deg,#e8e8e8 0%,#fff 50%,#f5f5f5 100%);-webkit-box-shadow:0 0 14px rgba(255,255,255,.45);box-shadow:0 0 14px rgba(255,255,255,.45);-webkit-transform:scaleX(0);transform:scaleX(0);-webkit-transform-origin:left center;transform-origin:left center;-webkit-transition:-webkit-transform .85s cubic-bezier(.22,1,.36,1),background .35s ease;transition:transform .85s cubic-bezier(.22,1,.36,1),background .35s ease}
     #progressPct{margin-top:10px;color:#fff;font-size:28px;font-weight:800;letter-spacing:.06em;text-shadow:0 0 14px rgba(255,255,255,.45)}
-    #successMsg{display:none;margin-top:12px;color:#22c55e;font-size:18px;font-weight:800;letter-spacing:.02em;text-shadow:0 0 16px rgba(34,197,94,.45);line-height:1.4}
-    body.done #status{display:none!important}
+    #elapsedMsg{margin-top:6px;color:#e5e5e5;font-size:14px;font-weight:600;letter-spacing:.04em;text-shadow:0 0 8px rgba(255,255,255,.2)}
+    #successMsg{display:none;margin-top:10px;color:#22c55e;font-size:18px;font-weight:800;letter-spacing:.02em;text-shadow:0 0 16px rgba(34,197,94,.45);line-height:1.3}
+    #successMsg .check{display:inline-block;width:16px;height:9px;margin:0 10px 3px 0;border-left:3px solid #2a9fff;border-bottom:3px solid #2a9fff;-webkit-transform:rotate(-45deg);transform:rotate(-45deg);vertical-align:middle;color:transparent;text-shadow:none;font-size:0}
+    body.done #statusMsg{display:none!important}
     body.done #successMsg{display:block}
     body.done #progressPct{color:#86efac}
-    body.done #progressBar{-webkit-transform:scaleX(1)!important;transform:scaleX(1)!important;background:linear-gradient(90deg,#15803d,#16a34a,#22c55e,#86efac)!important;box-shadow:0 0 14px rgba(34,197,94,.55)!important}
-    #footer{position:fixed;left:0;right:0;bottom:12px;text-align:center;font-size:16px;color:#fff;letter-spacing:.08em;pointer-events:none;text-shadow:0 0 12px rgba(255,255,255,.35);z-index:20}
+    body.done #elapsedMsg{color:#86efac}
+    body.done #progressBar{-webkit-transform:scaleX(1)!important;transform:scaleX(1)!important;background:#22c55e;background:-webkit-linear-gradient(90deg,#15803d 0%,#16a34a 40%,#22c55e 70%,#86efac 100%);background:linear-gradient(90deg,#15803d 0%,#16a34a 40%,#22c55e 70%,#86efac 100%);-webkit-box-shadow:0 0 14px rgba(34,197,94,.55);box-shadow:0 0 14px rgba(34,197,94,.55)}
+    #footer{position:fixed;left:0;right:0;bottom:10px;text-align:center;font-size:12px;color:#fff;letter-spacing:.08em;pointer-events:none;line-height:1.5;text-shadow:0 0 12px rgba(255,255,255,.35);z-index:20}
     #footer b{color:#fff;font-weight:600}
   </style>
 </head>
 <body>
   <div id="bg" aria-hidden="true"></div>
   <main>
-    <p id="status">Updating version…</p>
-    <div id="progressWrap"><div id="progressBar"></div></div>
+    <p id="statusMsg">Installing…</p>
+    <div id="progressContainer"><div id="progressBar"></div></div>
     <div id="progressPct">0%</div>
-    <div id="successMsg">Updated successfully<br>Opening WK Autoloader…</div>
+    <p id="elapsedMsg">Elapsed 0:00</p>
+    <div id="successMsg"><span class="check" aria-hidden="true"></span>Updated successfully<br>Opening WK Autoloader…</div>
   </main>
   <footer id="footer"><b>Created by X-F1REBALL-X</b></footer>
   <script>
   (function(){
     'use strict';
-    var statusEl=document.getElementById('status');
+    var statusEl=document.getElementById('statusMsg');
     var progressBar=document.getElementById('progressBar');
     var progressPct=document.getElementById('progressPct');
-    var completed=false,isDownloading=false,currentUid='',probeOk=false;
-    var AUTOLOADER_URL='/app/index.html';
+    var elapsedMsgEl=document.getElementById('elapsedMsg');
+    var completed=false,installInFlight=false,currentUid='',probeOk=false;
+    var progressPctVal=0,progressTimer=0,elapsedTimer=0,elapsedStart=0;
+    /* Same absolute target as assets/param.json deeplinkUri — home icon +
+       post-install navigation both hit live :1022 /app while server stays up. */
+    var AUTOLOADER_URL='http://127.0.0.1:1022/app/index.html';
+    var SOFT_CAP=97;
     (function(){
       var p=new URLSearchParams(window.location.search);
       currentUid=p.get('uid')||'';
     })();
     function setProgress(pct){
-      if(pct<0)pct=0; if(pct>100)pct=100;
+      pct=Math.max(0,Math.min(100,pct|0));
+      if(pct<progressPctVal&&pct!==0&&pct!==100) return;
+      progressPctVal=pct;
       progressBar.style.webkitTransform='scaleX('+(pct/100)+')';
       progressBar.style.transform='scaleX('+(pct/100)+')';
-      progressPct.textContent=Math.floor(pct)+'%';
+      progressPct.textContent=pct+'%';
+    }
+    function formatElapsed(ms){
+      var s=Math.floor(ms/1000),m=Math.floor(s/60);s=s%60;
+      return m+':'+(s<10?'0':'')+s;
+    }
+    function startElapsed(){
+      if(elapsedTimer) return;
+      elapsedStart=Date.now();
+      if(elapsedMsgEl) elapsedMsgEl.textContent='Elapsed 0:00';
+      elapsedTimer=setInterval(function(){
+        if(!elapsedMsgEl) return;
+        elapsedMsgEl.textContent='Elapsed '+formatElapsed(Date.now()-elapsedStart);
+      },1000);
+    }
+    function stopElapsed(){
+      if(elapsedTimer){ clearInterval(elapsedTimer); elapsedTimer=0; }
     }
     function setInstalled(){
       completed=true;
+      installInFlight=false;
+      stopElapsed();
+      if(progressTimer){ clearInterval(progressTimer); progressTimer=0; }
       try{document.body.className='done'}catch(e){}
-      setProgress(100);
+      var from=progressPctVal,start=Date.now();
+      var anim=setInterval(function(){
+        var p=Math.min(1,(Date.now()-start)/900);
+        setProgress(Math.floor(from+(100-from)*p));
+        if(p>=1){ try{clearInterval(anim)}catch(eA){} setProgress(100); }
+      },30);
     }
-    function setCaching(){ statusEl.textContent='Updating version…'; }
+    function setCaching(){ statusEl.textContent='Installing…'; }
     function goToAutoloader(){ window.location.replace(AUTOLOADER_URL); }
+    /* Best-effort /version for uid only — never gates /install. */
     function probeServer(){
       var xhr=new XMLHttpRequest();
       xhr.open('GET','/version',true); xhr.timeout=1000;
       xhr.onreadystatechange=function(){
-        if(xhr.readyState===4){
-          if(xhr.status===200){
-            var u=xhr.getResponseHeader('X-User-Id'); if(u) currentUid=u;
-            probeOk=true; setCaching();
-          } else goToAutoloader();
+        if(xhr.readyState===4 && xhr.status===200){
+          var u=xhr.getResponseHeader('X-User-Id'); if(u) currentUid=u;
+          probeOk=true; setCaching();
         }
       };
-      xhr.onerror=xhr.ontimeout=function(){ goToAutoloader(); };
+      xhr.onerror=xhr.ontimeout=function(){ /* probe is optional */ };
       xhr.send();
     }
     function installApp(){
+      if(completed) return;
+      if(installInFlight) return;
+      installInFlight=true;
+      setCaching();
       var xhr=new XMLHttpRequest();
-      xhr.open('GET','/install',true); xhr.timeout=30000;
+      /* Install can take ~30s on console; 30s timeout raced success and
+         blocked goToAutoloader / home-icon open. Allow 2 minutes. */
+      xhr.open('GET','/install',true); xhr.timeout=120000;
       xhr.onreadystatechange=function(){
         if(xhr.readyState===4){
+          installInFlight=false;
           if(xhr.status===200){
             setInstalled();
-            /* Open the WK UI while :1022 is still up (server stays after install). */
+            /* Open the WK UI while :1022 is still up (server stays after install;
+               deeplinkUri in param.json is the same absolute /app URL). */
             setTimeout(goToAutoloader, 350);
           } else {
             completed=false; setCaching(); setTimeout(installApp,1500);
           }
         }
       };
-      xhr.onerror=xhr.ontimeout=function(){ completed=false; setCaching(); setTimeout(installApp,1500); };
+      xhr.onerror=xhr.ontimeout=function(){
+        installInFlight=false; completed=false; setCaching(); setTimeout(installApp,1500);
+      };
       xhr.send();
     }
-    /* Pre-9c3ce5b triggers: AppCache events, IDLE poll, or short timeout → /install.
-       Do not gate forever on cacheReady. No Clear Cache / /clear-webkit-data. */
-    function maybeInstall(){
-      if(completed) return;
-      if(typeof applicationCache!=='undefined' &&
-         applicationCache.status===applicationCache.UPDATEREADY){
-        try{ applicationCache.swapCache(); }catch(e){}
-      }
-      completed=true;
-      installApp();
+    /* Soft fill: climb continuously to 97 while waiting OR installing —
+       NEVER hold at 88. HTTP 200 → setInstalled snaps to 100. */
+    var softPct=2;
+    function startProgressDriver(){
+      if(progressTimer) return;
+      progressTimer=setInterval(function(){
+        if(document.body.className==='done'){
+          clearInterval(progressTimer); progressTimer=0; return;
+        }
+        var cap=SOFT_CAP;
+        if(softPct>=cap){
+          if(progressPctVal<cap) setProgress(cap);
+          return;
+        }
+        softPct+=Math.max(0.55,(cap-softPct)*0.055);
+        if(softPct>cap) softPct=cap;
+        setProgress(Math.floor(softPct));
+      },250);
     }
     window.addEventListener('load',function(){
-      setCaching(); setProgress(2); probeServer();
-      var soft=2;
-      var softTimer=setInterval(function(){
-        if(document.body.className==='done'){ clearInterval(softTimer); return; }
-        if(soft<90){ soft+=Math.max(0.4,(90-soft)*0.04); setProgress(soft); }
-      },300);
-      var waitTimer=setInterval(function(){
-        if(document.body.className==='done'){ clearInterval(waitTimer); return; }
-        if(!probeOk){ clearInterval(waitTimer); goToAutoloader(); return; }
-        if(typeof applicationCache==='undefined'){ clearInterval(waitTimer); maybeInstall(); return; }
-        var st=applicationCache.status;
-        if(st===applicationCache.IDLE||st===applicationCache.UPDATEREADY){
-          clearInterval(waitTimer); maybeInstall();
-        }
-      },400);
+      setCaching(); setProgress(2); startElapsed(); startProgressDriver();
+      /* /install immediately — do not wait on /version or AppCache. */
+      installApp();
+      probeServer();
+      /* AppCache listeners: progress UI only. Do not start or delay
+         /install from these events. No swapCache. */
       if(typeof applicationCache!=='undefined'){
         applicationCache.addEventListener('progress',function(e){
-          isDownloading=true;
-          if(e&&e.lengthComputable&&e.total>0) setProgress(Math.min(92,8+(e.loaded/e.total)*84));
+          if(e&&e.lengthComputable&&e.total>0){
+            var p=Math.min(SOFT_CAP,8+Math.floor((e.loaded/e.total)*89));
+            if(p>softPct) softPct=p;
+            if(p>progressPctVal) setProgress(p);
+          }
         },false);
-        applicationCache.addEventListener('cached',function(){ maybeInstall(); },false);
-        applicationCache.addEventListener('updateready',function(){ maybeInstall(); },false);
-        applicationCache.addEventListener('noupdate',function(){ maybeInstall(); },false);
         applicationCache.addEventListener('error',function(){
-          isDownloading=false;
           setCaching();
-          try{ applicationCache.update(); }catch(e){}
         },false);
         applicationCache.addEventListener('obsolete',function(){
           setCaching();
-          try{ applicationCache.update(); }catch(e){}
         },false);
       }
-      setTimeout(function(){
-        if(document.body.className!=='done'&&probeOk) maybeInstall();
-      },45000);
     });
   })();
   </script>

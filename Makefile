@@ -1,5 +1,5 @@
 # WebKit Autoloader Installer - Native PS5 ELF Makefile
-# Release tree marker: v1.0.1
+# Release tree marker: v1.0.2
 
 # Tools
 PYTHON := python3
@@ -17,8 +17,7 @@ LIBS     := $(TARGET)/lib/libmicrohttpd.a \
 
 # Source Files
 SRCS := src/main.c src/http_server.c src/app_installer.c \
-        src/notification.c src/ps5_launcher.c src/log.c src/inflate.c \
-        src/simulate_corrupt.c
+        src/notification.c src/ps5_launcher.c src/log.c src/inflate.c
 ELF := installer.elf
 
 # Generated file registry
@@ -57,18 +56,6 @@ WKAL_HOST_SOURCES := pc-host/host.py $(FRONTEND_FILES)
 CFLAGS  := -Os -Wall -ffunction-sections -fdata-sections $(INCLUDES)
 LDFLAGS := -Wl,--gc-sections
 
-#   SIMULATE=0 (default) - production behavior, corruption detection only
-#   SIMULATE=1 - every cache download fails once then heals (test-only; no OS wipe)
-#   SIMULATE=2 - every cache download always fails (tests the terminal-error retry path)
-# Clear Cache / /clear-webkit-data / WebKit wipe+relaunch are removed from the ELF.
-# NOTE: CFLAGS changes are not tracked by make, so always `make clean all` when
-# switching SIMULATE modes.
-SIMULATE ?= 0
-ifeq ($(SIMULATE),1)
-CFLAGS += -DWKALI_SIMULATE_CACHE_CORRUPTION=1
-else ifeq ($(SIMULATE),2)
-CFLAGS += -DWKALI_SIMULATE_CACHE_CORRUPTION=2
-endif
 
 all: $(ELF)
 

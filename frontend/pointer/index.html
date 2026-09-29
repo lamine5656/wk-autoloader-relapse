@@ -60,28 +60,53 @@
       var dir = '[[APP_DIR_PLACEHOLDER]]';
       var version = '[[VERSION_PLACEHOLDER]]';
       var statusEl = document.getElementById('status');
+      /* Absolute live target — same host as param.json deeplinkUri / installer
+         post-install open. Bypasses stale AppCache when :1022 is up. */
+      var LIVE_APP = 'http://127.0.0.1:1022/app/' + dir + '/index.html';
 
       function fail() {
-        statusEl.textContent = 'Cache incomplete - run the installer again.';
+        statusEl.textContent = 'Unable to open — run the installer again.';
         statusEl.className = 'bad';
       }
 
-      /* __complete__ is the LAST entry of the AppCache manifest, so if it is
-         present (with our version content) every file before it was downloaded.
-         Only then point at the app. Use XHR (not fetch): PS5 WebKit AppCache
-         + home deeplink is more reliable with XHR when :1022 is offline. */
+      function goCachedApp() {
+        window.location.replace('/app/' + dir + '/index.html');
+      }
+
+      function goLiveApp() {
+        window.location.replace(LIVE_APP);
+      }
+
+      function probeLiveServer() {
+        var probe = new XMLHttpRequest();
+        probe.open('GET', '/version', true);
+        probe.timeout = 1500;
+        probe.onload = function () {
+          if (probe.status === 200) {
+            goLiveApp();
+          } else {
+            fail();
+          }
+        };
+        probe.onerror = probe.ontimeout = fail;
+        probe.send();
+      }
+
+      /* Soft-gate: __complete__ (manifest last entry) proves AppCache is whole.
+         On success use relative versioned path (offline OK). On fail/mismatch
+         probe live /version — if :1022 is up, open live /app (absolute). */
       var xhr = new XMLHttpRequest();
       xhr.open('GET', '/app/' + dir + '/__complete__', true);
       xhr.timeout = 4000;
       xhr.onload = function () {
         var t = (xhr.responseText || '').trim();
         if (xhr.status === 200 && t === version) {
-          window.location.replace('/app/' + dir + '/index.html');
+          goCachedApp();
         } else {
-          fail();
+          probeLiveServer();
         }
       };
-      xhr.onerror = xhr.ontimeout = fail;
+      xhr.onerror = xhr.ontimeout = probeLiveServer;
       xhr.send();
     })();
   </script>

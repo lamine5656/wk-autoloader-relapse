@@ -34,7 +34,6 @@ INCASSET(icon0_png, "assets/icon0.png");
 int sceAppInstUtilInitialize(void);
 int sceAppInstUtilTerminate(void);
 int sceAppInstUtilAppInstallAll(void *);
-int sceAppInstUtilAppUnInstall(const char *);
 
 /* Path buffers below are built as /user/app/<title_id>/... - title IDs are
  * fixed 9-char strings, so 256 bytes can never truncate. This guard keeps
@@ -122,12 +121,6 @@ int wkali_install_app(void) {
   if ((err = sceAppInstUtilInitialize())) {
     wkali_log("[WKALI] sceAppInstUtilInitialize: error 0x%08X\n", err);
     return -1;
-  }
-
-  /* Clear any prior Games-category registration before Media reinstall. */
-  if (stat(base_dir, &st) == 0) {
-    err = sceAppInstUtilAppUnInstall(title_id);
-    wkali_log("[WKALI] UnInstall %s: 0x%08X\n", title_id, err);
   }
 
   char sce_sys_dir[256];

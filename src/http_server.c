@@ -1,4 +1,4 @@
-/* Release tree marker: v1.0.1. */
+/* Release tree marker: v1.0.2. */
 /*
  * HTTP Server - serves the cached frontend files from the generated file
  * registry and handles the /install route (installs the homescreen app once
@@ -17,7 +17,6 @@
 #include "file_registry.h"
 #include "inflate.h"
 #include "app_installer.h"
-#include "simulate_corrupt.h"
 
 /* CORS is intentionally `*`: the installer page is also served from the PC
  * host (manuals.playstation.net over HTTPS), which cross-origin XHRs this
@@ -26,7 +25,7 @@
  * Do not restrict unless that flow changes. */
 #define CORS_ORIGIN "*"
 
-/* Shared flag - set to 0 by a successful /install or /exit, read by the main loop.
+/* Shared flag - set to 0 by /exit only; /install keeps :1022 up for home deeplink.
  * atomic so the store in a connection thread is visible to the main loop. */
 atomic_int http_keep_running = 1;
 
@@ -251,9 +250,6 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
                     mem_mode = MHD_RESPMEM_MUST_FREE;
                 }
             }
-
-            /* Test simulation hook (no-op unless compiled with SIMULATE=1|2) */
-            simulate_corrupt_manifest(url, &payload, &payload_size, &mem_mode);
 
             resp = MHD_create_response_from_buffer(payload_size, payload,
                                                    mem_mode);
