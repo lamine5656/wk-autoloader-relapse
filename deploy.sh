@@ -1,6 +1,6 @@
 #!/bin/bash
 # WebKit Autoloader Installer - Automated Build & Deploy Script
-# Release tree marker: v1.0.0
+# Release tree marker: v1.0.1
 
 if [ -z "$1" ]; then
     echo "Usage: ./deploy.sh [PS5_IP]"
