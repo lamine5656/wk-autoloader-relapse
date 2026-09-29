@@ -2,7 +2,9 @@
 
 PS5 homebrew: jailbreak UI on port **1022**. Chains: **umtx2** (1–5.xx), **relapse** (7.00–13.60).
 
-Current release: **[v1.0.4](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/tag/v1.0.4)** — download `installer.elf`.
+Current release: **[v1.1.0](https://github.com/lamine5656/wk-autoloader-relapse/releases/tag/v1.1.0)** — download `installer.elf`.
+
+**v1.1.0 highlights** — modern neon UI (French), **Payload Manager / autoload.txt mode as the default** post-JB launcher (same behavior as itsPLK's ps5-webkit-autoloader: your payloads listed in `autoload.txt` are loaded via elfldr, then the browser closes itself), SVG progress ring, animated background.
 
 ## Screenshots
 
@@ -21,10 +23,34 @@ Current release: **[v1.0.4](https://github.com/X-F1REBALL-X/wk-autoloader-relaps
 
 ## Use
 
-1. Download `installer.elf` from **[v1.0.4](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/tag/v1.0.4)**.
+1. Download `installer.elf` from **[v1.1.0](https://github.com/lamine5656/wk-autoloader-relapse/releases/tag/v1.1.0)**.
 2. Send it to elfldr (`9021`).
 3. Open the home icon or `http://PS5_IP:1022`.
-4. Pick **Payload Manager** (`:8084`) or **Elf Launcher** (`:1000`), then **Start Jailbreak**.
+4. Pick **Payload Manager** (default, autoload.txt) or **Elf Launcher** (`:1000`), then **Lancer le jailbreak**.
+
+## autoload.txt (Payload Manager mode — default)
+
+After the jailbreak, WK Autoloader sends `payload.elf` (ps5-unified-autoloader), which:
+
+1. Closes the WebKit browser by itself (return to home).
+2. Looks for `autoload.txt`: USB root first (`/mnt/usb0-7/ps5_autoloader/`), then `/data/ps5_autoloader/`.
+3. Sends every listed payload through elfldr, in order.
+
+Prepare a `ps5_autoloader` folder with your `.elf` / `.bin` files and an `autoload.txt`
+(one filename per line; `!1000` = sleep 1000 ms; `#` = comment). Put the folder on a USB
+stick root, or copy it to `/data/ps5_autoloader` over FTP.
+
+Example:
+
+```
+# Custom ELF loader first
+elfldr.elf
+# Give it 4 s to start listening
+!4000
+etaHEN.elf
+```
+
+> Without an `autoload.txt`, the payload automatically opens the Payload Manager web UI (`:8084`).
 
 ## Elf Launcher
 

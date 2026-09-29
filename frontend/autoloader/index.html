@@ -1,63 +1,99 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
-  <!-- Release tree marker: v1.0.4 -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" type="image/png" href="favicon.png" />
-  <link rel="preload" href="ps5-hero.jpg" as="image" />
   <title>WK Autoloader</title>
 </head>
 <body>
-  <div id="bg" aria-hidden="true"></div>
+  <!-- Fond animé : aurores + grille néon (transform-only, PS5-safe) -->
+  <div id="bg" aria-hidden="true">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid"></div>
+    <div class="vignette"></div>
+  </div>
 
   <div id="splash" aria-hidden="false">
     <div id="launcherChoice" role="group" aria-label="Post-jailbreak launcher">
-      <p class="splash-brand">WK Autoloader <span class="splash-ver">v[[VERSION_PLACEHOLDER]]</span></p>
-      <p class="support-title">Supported FW 1.00-5.50 / 7.00-13.60</p>
-      <p class="detect-title" id="detectMsg">Detecting console...</p>
-      <p class="choice-title">After jailbreak, open</p>
+      <div class="brand-row">
+        <img class="brand-logo" src="logo.png" alt="" width="64" height="64" />
+        <div class="brand-text">
+          <p class="splash-brand">WK <span>Autoloader</span></p>
+          <p class="splash-ver">v[[VERSION_PLACEHOLDER]]</p>
+        </div>
+      </div>
+
+      <p class="support-title">Firmwares support&eacute;s &middot; 1.00&ndash;5.50 (umtx2) &middot; 7.00&ndash;13.60 (relapse)</p>
+      <p class="detect-title" id="detectMsg">D&eacute;tection de la console&hellip;</p>
+
+      <p class="choice-title">Apr&egrave;s le jailbreak, lancer</p>
       <div class="choice-row">
         <button type="button" class="choice-btn" id="choicePayloadManager" data-choice="payload-manager">
           <img class="choice-icon" src="payload-manager-icon.jpg" width="56" height="56" alt="" />
           <span class="choice-name">Payload Manager</span>
-          <span class="choice-desc">HTTP Manager on :8084</span>
+          <span class="choice-desc">autoload.txt &middot; interface web :8084</span>
+          <span class="choice-badge">Recommand&eacute;</span>
         </button>
         <button type="button" class="choice-btn" id="choiceElfLauncher" data-choice="elf-launcher">
           <img class="choice-icon" src="elf-launcher-icon.jpg" width="56" height="56" alt="" />
           <span class="choice-name">Elf Launcher</span>
-          <span class="choice-desc">HTTP launcher on :1000</span>
+          <span class="choice-desc">Interface ELF sur :1000</span>
         </button>
       </div>
+
       <label class="auto-jb-toggle" for="autoJailbreak">
         <input type="checkbox" id="autoJailbreak" />
-        <span>Auto-start jailbreak</span>
+        <span class="tswitch" aria-hidden="true"></span>
+        <span>D&eacute;marrage auto</span>
       </label>
-      <button type="button" id="startJailbreak" class="start-btn">Start Jailbreak</button>
-      <button type="button" id="cancelAutoStart" class="cancel-auto-btn" hidden>Cancel</button>
-      <p class="choice-hint">Choice is saved on this console</p>
+
+      <button type="button" id="startJailbreak" class="start-btn">Lancer le jailbreak</button>
+      <button type="button" id="cancelAutoStart" class="cancel-auto-btn" hidden>Annuler</button>
+
+      <p class="choice-hint">Envoie ton dossier <b>ps5_autoloader</b> (autoload.txt + ELF) en USB ou vers /data &mdash; les payloads sont charg&eacute;s puis le navigateur se ferme automatiquement. Le choix est enregistr&eacute; sur cette console.</p>
     </div>
   </div>
 
   <iframe id="exploit" title="exploit" hidden></iframe>
 
   <main id="loader" hidden>
-    <img id="appLogo" src="logo.png" alt="" width="72" height="72" />
-    <p id="titleMsg">WK Autoloader <span id="appVer">v[[VERSION_PLACEHOLDER]]</span></p>
-    <p id="metaMsg">FW - · chain -</p>
-    <p id="statusMsg">Jailbreak started</p>
     <div id="progressContainer">
-      <div id="progressBar"></div>
+      <svg id="progressRing" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#22d3ee" />
+            <stop offset="55%" stop-color="#3b82f6" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="100" cy="100" r="88" />
+        <circle class="ring-fill" id="progressBar" cx="100" cy="100" r="88"
+                transform="rotate(-90 100 100)" />
+      </svg>
+      <div id="ringCenter">
+        <img id="appLogo" src="logo.png" alt="" width="66" height="66" />
+        <div id="progressPct">0%</div>
+      </div>
     </div>
-    <div id="progressPct">0%</div>
-    <p id="elapsedMsg">Elapsed 0:00</p>
-    <div id="successMsg"><span class="check" aria-hidden="true"></span>Jailbreak completed successfully</div>
-    <div id="failMsg">Jailbreak failed - restart your console</div>
-    <div id="progressLabel" hidden>Jailbreak in progress</div>
+
+    <p id="titleMsg">WK Autoloader <span id="appVer">v[[VERSION_PLACEHOLDER]]</span></p>
+    <p id="metaMsg">FW - &middot; cha&icirc;ne -</p>
+    <p id="statusMsg">Jailbreak en cours&hellip;</p>
+
+    <p id="elapsedMsg">&Eacute;coul&eacute; 0:00</p>
+    <div id="successMsg"><span class="check" aria-hidden="true"></span>Jailbreak r&eacute;ussi</div>
+    <p id="successSub">Payloads charg&eacute;s depuis autoload.txt &mdash; le navigateur va se fermer automatiquement.</p>
+    <div id="failMsg">&Eacute;chec &mdash; red&eacute;marre ta console et r&eacute;essaie</div>
+
+    <div id="progressLabel" hidden>Jailbreak en cours</div>
     <div id="logWrapper" hidden>
       <div id="logContainer"></div>
     </div>
+
+    <!-- Statistiques live p2jb (miroir du #livestat de l'exploit, mode force uniquement) -->
     <div id="p2jbStats" hidden>
       <div class="stats-head">
         <span class="stats-title">P2JB</span>
@@ -82,7 +118,7 @@
     </div>
   </main>
 
-  <footer id="footer"><b>Created by X-F1REBALL-X</b></footer>
+  <footer id="footer"><b>WK Autoloader</b> &middot; d'apr&egrave;s ps5-webkit-autoloader (itsPLK) &middot; cha&icirc;ne relapse (7.00&ndash;13.60) par X-F1REBALL-X</footer>
   <script src="app.js"></script>
 </body>
 </html>
