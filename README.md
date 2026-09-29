@@ -64,13 +64,36 @@ Relapse lineage (13.xx chain): see `frontend/autoloader/relapse/` (ntfargo / PS5
 
 ## Build note (this private Relapse tree)
 
-This repository is private. Rebuild `installer.elf` on a machine with the PS5 SDK after:
+This repository is private. Relapse (13.xx) is vendored under `frontend/autoloader/relapse/` and already wired in `app.js` / `tools/gen_file_registry.py`.
+
+### Without the PS5 SDK (Linux box / CI preview)
+
+These steps regenerate prepared frontend copies, icons, staged `frontend/dist/`, AppCache (`frontend/dist/cache.appcache`), and the embedded registry sources (`include/file_registry.{h,c}`). Those outputs are gitignored — they are produced again at installer build time.
 
 ```bash
 git submodule update --init --recursive
 ./tools/download_deps.sh
 make slopkit-prepare umtx2-prepare
-# then the usual installer build (see Makefile / build_release.sh)
+make include/.file_registry.stamp   # needs python3 + rsvg-convert (librsvg2-bin)
 ```
 
-AppCache / embedded registry pick up `frontend/autoloader/relapse/` automatically via `tools/gen_file_registry.py`. Force Relapse with `?force=relapse` or `FORCE_EXPLOIT=relapse`.
+Force Relapse with `?force=relapse` or `FORCE_EXPLOIT=relapse`.
+
+### Remaining step: build `installer.elf` (needs PS5 SDK)
+
+Blocked without `/opt/ps5-payload-sdk` (`prospero-clang`). On a machine with Docker:
+
+```bash
+./build_release.sh
+# builds image from Dockerfile.sdk (ps5-payload-dev/sdk + libmicrohttpd),
+# then: make clean all  ->  installer.elf
+#       make host       ->  webkit-autoloader-host_v*.py
+```
+
+Or with the SDK already installed at `/opt/ps5-payload-sdk`:
+
+```bash
+./tools/download_deps.sh
+make clean all          # installer.elf
+# optional: make host   # PC host with embedded frontend
+```
