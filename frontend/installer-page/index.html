@@ -41,7 +41,7 @@
     var statusEl=document.getElementById('status');
     var progressBar=document.getElementById('progressBar');
     var progressPct=document.getElementById('progressPct');
-    var completed=false,isDownloading=false,currentUid='',probeOk=false,cacheReady=false;
+    var completed=false,isDownloading=false,currentUid='',probeOk=false;
     var AUTOLOADER_URL='/app/index.html';
     (function(){
       var p=new URLSearchParams(window.location.search);
@@ -84,31 +84,24 @@
             /* Open the WK UI while :1022 is still up (server stays after install). */
             setTimeout(goToAutoloader, 350);
           } else {
-            completed=false; cacheReady=false; setCaching(); setTimeout(installApp,1500);
+            completed=false; setCaching(); setTimeout(installApp,1500);
           }
         }
       };
-      xhr.onerror=xhr.ontimeout=function(){ completed=false; cacheReady=false; setCaching(); setTimeout(installApp,1500); };
+      xhr.onerror=xhr.ontimeout=function(){ completed=false; setCaching(); setTimeout(installApp,1500); };
       xhr.send();
     }
-    /* Only install after AppCache reports a finished update — never on a bare
-       IDLE poll or a short timeout (26MB tree can take minutes on console). */
+    /* Pre-9c3ce5b triggers: AppCache events, IDLE poll, or short timeout → /install.
+       Do not gate forever on cacheReady. No Clear Cache / /clear-webkit-data. */
     function maybeInstall(){
-      if(completed || !cacheReady) return;
-      completed=true;
-      installApp();
-    }
-    function markCacheReadyAndInstall(){
+      if(completed) return;
       if(typeof applicationCache!=='undefined' &&
          applicationCache.status===applicationCache.UPDATEREADY){
         try{ applicationCache.swapCache(); }catch(e){}
       }
-      cacheReady=true;
-      maybeInstall();
+      completed=true;
+      installApp();
     }
-    /* No Clear Cache / /clear-webkit-data in the installer ELF. That wipe+
-       relaunch path caused the open/close loop stuck ~90%. On AppCache
-       error/obsolete, retry update only. Pages Clear Cache is docs-only. */
     window.addEventListener('load',function(){
       setCaching(); setProgress(2); probeServer();
       var soft=2;
@@ -116,37 +109,36 @@
         if(document.body.className==='done'){ clearInterval(softTimer); return; }
         if(soft<90){ soft+=Math.max(0.4,(90-soft)*0.04); setProgress(soft); }
       },300);
-      if(typeof applicationCache==='undefined'){
-        cacheReady=true;
-        maybeInstall();
-        return;
-      }
-      applicationCache.addEventListener('progress',function(e){
-        isDownloading=true;
-        if(e&&e.lengthComputable&&e.total>0) setProgress(Math.min(92,8+(e.loaded/e.total)*84));
-      },false);
-      applicationCache.addEventListener('cached',function(){ markCacheReadyAndInstall(); },false);
-      applicationCache.addEventListener('updateready',function(){ markCacheReadyAndInstall(); },false);
-      applicationCache.addEventListener('noupdate',function(){ markCacheReadyAndInstall(); },false);
-      applicationCache.addEventListener('error',function(){
-        isDownloading=false;
-        setCaching();
-        try{ applicationCache.update(); }catch(e){}
-      },false);
-      applicationCache.addEventListener('obsolete',function(){
-        setCaching();
-        try{ applicationCache.update(); }catch(e){}
-      },false);
-      /* Force an update check so we do not treat pre-check IDLE as "done". */
-      try{ applicationCache.update(); }catch(e){}
-      /* Last-resort only: large Relapse tree can take several minutes. */
-      setTimeout(function(){
-        if(document.body.className==='done'||!probeOk||completed) return;
+      var waitTimer=setInterval(function(){
+        if(document.body.className==='done'){ clearInterval(waitTimer); return; }
+        if(!probeOk){ clearInterval(waitTimer); goToAutoloader(); return; }
+        if(typeof applicationCache==='undefined'){ clearInterval(waitTimer); maybeInstall(); return; }
         var st=applicationCache.status;
         if(st===applicationCache.IDLE||st===applicationCache.UPDATEREADY){
-          markCacheReadyAndInstall();
+          clearInterval(waitTimer); maybeInstall();
         }
-      },300000);
+      },400);
+      if(typeof applicationCache!=='undefined'){
+        applicationCache.addEventListener('progress',function(e){
+          isDownloading=true;
+          if(e&&e.lengthComputable&&e.total>0) setProgress(Math.min(92,8+(e.loaded/e.total)*84));
+        },false);
+        applicationCache.addEventListener('cached',function(){ maybeInstall(); },false);
+        applicationCache.addEventListener('updateready',function(){ maybeInstall(); },false);
+        applicationCache.addEventListener('noupdate',function(){ maybeInstall(); },false);
+        applicationCache.addEventListener('error',function(){
+          isDownloading=false;
+          setCaching();
+          try{ applicationCache.update(); }catch(e){}
+        },false);
+        applicationCache.addEventListener('obsolete',function(){
+          setCaching();
+          try{ applicationCache.update(); }catch(e){}
+        },false);
+      }
+      setTimeout(function(){
+        if(document.body.className!=='done'&&probeOk) maybeInstall();
+      },45000);
     });
   })();
   </script>
