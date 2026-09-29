@@ -4,7 +4,7 @@
 #
 #   third_party/ps5-elfldr             -> frontend/autoloader/shared/elfldr-ps5.elf
 #   third_party/ps5-unified-autoloader -> frontend/autoloader/payloads/payload.elf
-#   X-F1REBALL-X/elf-launcher@v0.0.13  -> frontend/autoloader/payloads/elf-launcher.elf
+#   X-F1REBALL-X/elf-launcher@v1.0.5  -> frontend/autoloader/payloads/elf-launcher.elf
 #
 # The shared elfldr is used by the slopkit chain (7.00-12.00); umtx2
 # (1.00-5.50) boots its own elfldr from the umtx2 submodule, like stock umtx2.
@@ -45,18 +45,22 @@ PAYLOAD_DEST="$ROOT/frontend/autoloader/payloads/payload.elf"
 # Optional post-JB launcher (elf-launcher HTTP :1000, Kill APIs). Pinned
 # release; local sibling copies under /workspace/elf-launcher* win when present.
 ELFLAUNCHER_REPO="X-F1REBALL-X/elf-launcher"
-ELFLAUNCHER_TAG="v1.0.3"
+ELFLAUNCHER_TAG="v1.0.5"
 # Current console binary (dyn AppInst, no version stamp): listen :1000 for
 # WKAL ready-poll + open. WKAL only sends+opens; it does not AppInst/home-icon.
-# Prefer docs/launcher/elf-launcher.elf over older stamped / install-first trees.
-ELFLAUNCHER_PINNED_SHA=0b18a6c974b11709268315af9d61c501545fce1cfb884815c9a21b1f62d4fa47
+# Prefer launcher/elf-launcher.elf (current HOME_ICON_VERSION) over stale docs/launcher trees.
+ELFLAUNCHER_PINNED_SHA=ffaba582a76748f2a239d5ec3ebe6d38645c88771b8b4f29d722c8203bb8bfdc
 ELFLAUNCHER_DEST="$ROOT/frontend/autoloader/payloads/elf-launcher.elf"
 ELFLAUNCHER_LOCAL_CANDIDATES=(
-    "/workspace/elf-launcher-blue/docs/launcher/elf-launcher.elf"
-    "/workspace/elf-launcher-blue/host/hbinstall/elf-launcher-install.elf"
+    "/workspace/elf-launcher/launcher/elf-launcher.elf"
+    "/workspace/elf-launcher/host/hbinstall/elf-launcher-install.elf"
+    "$ROOT/../elf-launcher/launcher/elf-launcher.elf"
+    "$ROOT/../elf-launcher/host/hbinstall/elf-launcher-install.elf"
     "/workspace/elf-launcher-blue/launcher/elf-launcher.elf"
-    "$ROOT/../elf-launcher-blue/docs/launcher/elf-launcher.elf"
+    "/workspace/elf-launcher-blue/host/hbinstall/elf-launcher-install.elf"
+    "/workspace/elf-launcher-blue/docs/launcher/elf-launcher.elf"
     "$ROOT/../elf-launcher-blue/launcher/elf-launcher.elf"
+    "$ROOT/../elf-launcher-blue/docs/launcher/elf-launcher.elf"
 )
 
 # Fetch the pinned release, verify the payload, and download it if needed.

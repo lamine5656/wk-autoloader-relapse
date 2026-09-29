@@ -1,6 +1,6 @@
-# WK Autoloader (Relapse)
+# WK Autoloader
 
-PS5 homebrew: jailbreak UI on port **1022**. Chains: **umtx2** (1–5.xx), **Relapse** (7.00–13.60).
+PS5 homebrew: jailbreak UI on port **1022**. Chains: **umtx2** (1–5.xx), **relapse** (7.00–13.60).
 
 [Installer](https://github.com/X-F1REBALL-X/wk-autoloader-relapse/releases/latest)
 
@@ -34,7 +34,7 @@ Elf Launcher needs [elf-launcher-data.zip](https://github.com/X-F1REBALL-X/elf-l
 |----|-------|
 | 1.xx–5.xx | umtx2 |
 | 6.xx | unsupported |
-| 7.00–13.60 | Relapse |
+| 7.00–13.60 | relapse |
 
 ## Credits
 

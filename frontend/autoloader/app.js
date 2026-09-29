@@ -90,8 +90,8 @@
      skip sending. Always inject elf-launcher.elf after JB so :1000 starts.
      WKAL only sends the ELF and opens http://127.0.0.1:1000/; it does not
      AppInst / home-icon install (any of that is inside elf-launcher itself). */
-  var BUNDLED_ELFLAUNCHER_SHA = '0b18a6c974b11709268315af9d61c501545fce1cfb884815c9a21b1f62d4fa47';
-  var BUNDLED_ELFLAUNCHER_VER = '1.0.3';
+  var BUNDLED_ELFLAUNCHER_SHA = 'ffaba582a76748f2a239d5ec3ebe6d38645c88771b8b4f29d722c8203bb8bfdc';
+  var BUNDLED_ELFLAUNCHER_VER = '1.0.5';
   var LS_ELFLAUNCHER_SHA = 'wkal_elf_launcher_sha';
   var LS_ELFLAUNCHER_VER = 'wkal_elf_launcher_ver';
   var launcherChoice = CHOICE_ELF_LAUNCHER;
@@ -243,10 +243,10 @@
     }, 1000);
   }
 
-  /* User-facing chain labels. Default path is Relapse (7.00-13.60);
+  /* User-facing chain labels. Default path is relapse (7.00-13.60);
      p2jb remains an internal force-only id and is not advertised. */
   function formatChainLabel(chain) {
-    if (chain === 'relapse') return 'Relapse';
+    if (chain === 'relapse') return 'relapse';
     if (chain === 'umtx2') return 'umtx2';
     if (chain === 'p2jb') return chain; /* force= only */
     return chain || '-';
@@ -1340,7 +1340,7 @@
     if (frameUrl && frameUrl !== 'about:blank' && doc.readyState === 'complete'
       && frameUrl.indexOf('relapse/') === -1 && !mirrorRelapse.badUrl) {
       mirrorRelapse.badUrl = frameUrl;
-      setRelapseStatus('Relapse iframe did not load');
+      setRelapseStatus('Kernel iframe did not load');
       uiLog('[iframe] expected relapse/index.html, got ' + frameUrl, 'error');
     }
     var lines = doc.querySelectorAll('#console > div');
@@ -1464,7 +1464,7 @@
     if (picked === 'relapse') {
       setTimeout(function () {
         if (progressDone || relapseSawConsole) return;
-        setRelapseStatus('Relapse produced no log - iframe or module may have failed to load');
+        setRelapseStatus('Kernel chain produced no log - iframe or module may have failed to load');
       }, 12000);
     }
 
