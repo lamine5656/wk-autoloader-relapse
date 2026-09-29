@@ -106,10 +106,9 @@
       cacheReady=true;
       maybeInstall();
     }
-    /* Never auto-clear WebKit during install — /clear-webkit-data wipes the
-       browser mid-cache and the ELF re-launches into a reopen loop. Clear Cache
-       stays on Pages only. On AppCache error/obsolete, keep waiting / retrying
-       update; do not show a blocking Cache failed banner. */
+    /* No Clear Cache / /clear-webkit-data in the installer ELF. That wipe+
+       relaunch path caused the open/close loop stuck ~90%. On AppCache
+       error/obsolete, retry update only. Pages Clear Cache is docs-only. */
     window.addEventListener('load',function(){
       setCaching(); setProgress(2); probeServer();
       var soft=2;

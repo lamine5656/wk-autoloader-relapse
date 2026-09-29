@@ -10,7 +10,7 @@
  * This file handles: process init, signal setup, MHD lifecycle, shutdown.
  */
 
-/* Release tree marker: v1.0.3. */
+/* Release tree marker: v1.0.4. */
 #include <errno.h>
 #include <fcntl.h>
 #include <microhttpd.h>
@@ -216,30 +216,9 @@ int main(void) {
     /* Main loop - /install installs the homescreen app but keeps :1022 up so
      * the installer can open /app/index.html and the home icon works. Stops
      * only on /exit (or process kill / next installer instance). */
-    int webkit_clear_attempts = 0;
     int install_notified = 0;
 
     while (atomic_load(&http_keep_running)) {
-        /* Check if the frontend requested a WebKit data clear */
-        if (atomic_load(&webkit_data_cleared)) {
-            atomic_store(&webkit_data_cleared, 0);
-            webkit_clear_attempts++;
-
-            if (webkit_clear_attempts <= 1) {
-                /* Give the HTTP response time to flush before re-launching */
-                usleep(500000);
-                wkali_log("[WKALI] Re-launching browser after WebKit data clear (attempt %d)...\n",
-                          webkit_clear_attempts);
-                char retry_url[256];
-                snprintf(retry_url, sizeof(retry_url),
-                         "http://127.0.0.1:%d/?v=%s%s&retry=1",
-                         WKALI_PORT, WKAL_FULL_VERSION, uid_param);
-                ps5_launch_browser(retry_url);
-            } else {
-                wkali_log("[WKALI] WebKit clear already attempted %d time(s), not re-launching.\n",
-                          webkit_clear_attempts);
-            }
-        }
         if (!install_notified && atomic_load(&install_completed)) {
             install_notified = 1;
             wkali_notify("WK Autoloader cached successfully!");

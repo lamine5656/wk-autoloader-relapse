@@ -7,9 +7,9 @@
 #include <string.h>
 #include "wkali.h"
 
-/* Test-only: set to 1 once /clear-webkit-data succeeds. Used by the one-shot
- * (mode 1) simulation so the post-clear retry download runs a clean manifest,
- * mirroring a wipe actually fixing a corrupted on-disk cache. */
+/* Test-only: set to 1 once simulate_on_clear_success() is called. Used by
+ * the one-shot (mode 1) simulation so a later retry download runs a clean
+ * manifest. OS WebKit wipe/relaunch is no longer part of the ELF. */
 static atomic_int simulate_healed = 0;
 
 void simulate_on_clear_success(void) {

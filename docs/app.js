@@ -1512,8 +1512,9 @@
   }
 
 
-  /* Clear Application Cache + origin storage, then reload.
-     On the installer host also hits /clear-webkit-data (OS WebKit wipe).
+  /* Docs/Pages only: clear Application Cache + origin storage, then reload.
+     Never calls /clear-webkit-data — that route is gone from the installer ELF
+     (OS WebKit wipe+relaunch caused the install reopen loop at ~90%).
      Uses only PS5-WebKit-safe APIs (no Cache Storage / async await). */
   var clearCacheReloading = false;
   function clearClientCaches() {
@@ -1553,20 +1554,7 @@
       }
     }
     clearClientCaches();
-    var xhrStarted = false;
-    try {
-      var x = new XMLHttpRequest();
-      x.open('GET', '/clear-webkit-data', true);
-      x.timeout = 8000;
-      x.onreadystatechange = function () {
-        if (x.readyState === 4) reloadAfterClearCache();
-      };
-      x.onerror = function () { reloadAfterClearCache(); };
-      x.ontimeout = function () { reloadAfterClearCache(); };
-      xhrStarted = true;
-      x.send();
-    } catch (e) { }
-    setTimeout(reloadAfterClearCache, xhrStarted ? 8500 : 350);
+    setTimeout(reloadAfterClearCache, 350);
   }
   function bindClearCacheButtons() {
     var ids = ['clearCacheBtn', 'clearCacheBtnProgress'];
