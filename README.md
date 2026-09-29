@@ -67,9 +67,27 @@ Also mirrored under `screenshots/` and `/workspace/artifacts/screenshots/`.
 
 ## Credits
 
-**X-F1REBALL-X**
+**X-F1REBALL-X** — WK Autoloader Relapse fork (packaging, routing, UI).
 
-Relapse lineage (7.00–13.60 chain): see `frontend/autoloader/relapse/` (ntfargo / PS5-Relapse and related public research; vendored for WKAL).
+Credits below are for the kernel chains actually vendored in this tree. No single “kernel finder” credit is claimed.
+
+### umtx2 (default for 1.xx–5.xx)
+
+Vendored from [idlesauce/umtx2](https://github.com/idlesauce/umtx2) (`third_party/umtx2`, `frontend/autoloader/umtx2/`).
+
+Upstream lineage (from the umtx2 README): exploit code largely based on the lua UMTX work by @shahrilnet and @n0llptr; setup based on prior work by @SpecterDev and @ChendoChap ([PS5-UMTX-Jailbreak](https://github.com/PS5Dev/PS5-UMTX-Jailbreak/)); PSFree by abc; ELF loader by @john-tornblom.
+
+### Relapse (default for 7.00–13.60)
+
+Vendored under `frontend/autoloader/relapse/`. Plain-text credit list from the Relapse UI / lineage (as already in tree — `frontend/autoloader/relapse/src/site.js`):
+
+ntfargo, ufm42, Sonic_Iso, Jordy, Dr. Yenyen, TheFlow, SlidyBat, Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion
+
+### poops / p2jb (force= only)
+
+Still vendored via `frontend/autoloader/slopkit/` (from [itsPLK/slopkit](https://github.com/itsPLK/slopkit)) for `?force=poops|p2jb` / `FORCE_EXPLOIT` testing only — not selected by the default firmware picker.
+
+Upstream credit line (slopkit README): Egy, Sonic, Yenyen, Zeco, Gezine, Echostretch, Ufm42, TheFloW, John Tornblom, Flatz, Idlesauce and PS5 R&D Discord.
 
 ## Build note (this private Relapse tree)
 
