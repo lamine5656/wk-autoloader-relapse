@@ -55,6 +55,13 @@ async function run() {
   writeLog("Credits: ntfargo, ufm42, Sonic_Iso, Jordy, Dr. Yenyen, TheFlow, SlidyBat, Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion", "info");
   writeLog(`Agent: ${navigator.userAgent}`, "info");
   writeLog(`Firmware: ${window.fw_str}`, "info");
+  if (window.__relapseOffsetsReady) {
+    writeLog("Loading firmware offsets", "info");
+    await window.__relapseOffsetsReady;
+  }
+  if (typeof OFFSET_wk_host_constructor_candidates === "undefined")
+    throw new Error("offsets/" + window.fw_str + ".js did not load");
+  writeLog("Offsets ready", "info");
   const primitive = await getPrimitive();
   writeLog(`WebKit base: 0x${getWebKitBase().toString(16)}`, "info");
 

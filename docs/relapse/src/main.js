@@ -338,10 +338,24 @@ async function main(userlandRW) {
   }
 }
 
-const fwScript = document.createElement("script");
-document.body.appendChild(fwScript);
-
 // Fixed cache-bust so AppCache can list offsets/<fw>.js?v=1 exactly
 // (Date.now() would miss the offline cache). Keep in sync with
 // tools/gen_file_registry.py collect_cachebust_urls / relapse offsets.
-fwScript.setAttribute("src", `offsets/${window.fw_str}.js?v=1`);
+// Expose a promise so site.js does not start WebKit before offsets exist.
+window.__relapseOffsetsReady = new Promise((resolve, reject) => {
+  const fw = window.fw_str;
+  if (!fw) {
+    resolve();
+    return;
+  }
+  if (typeof OFFSET_wk_host_constructor_candidates !== "undefined" && window.KRW) {
+    resolve();
+    return;
+  }
+  const src = `offsets/${fw}.js?v=1`;
+  const fwScript = document.createElement("script");
+  fwScript.onload = () => resolve();
+  fwScript.onerror = () => reject(new Error("failed to load " + src));
+  fwScript.src = src;
+  document.body.appendChild(fwScript);
+});

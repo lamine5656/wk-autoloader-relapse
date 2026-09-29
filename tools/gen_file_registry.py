@@ -82,6 +82,9 @@ def include_in_registry(path):
         return name in ("elfldr-ps5-1360.elf", "kexp_2026_05_25.bin") or (
             name.startswith("kexp") and name.endswith(".bin")
         ) or name.startswith("elfldr")
+    # Relapse replaced poops for 7.00-13.60. Do not ship poops.html/js.
+    if path.endswith("/poops.html") or path.endswith("/poops.js"):
+        return False
     if path.endswith(".sha256"):
         return False
     return True
@@ -92,10 +95,10 @@ BUILD_TIME_PLACEHOLDER = b"[[BUILD_TIME_PLACEHOLDER]]"
 EXPLOIT_MODE_PLACEHOLDER = b"[[EXPLOIT_MODE]]"
 APP_DIR_PLACEHOLDER = b"[[APP_DIR_PLACEHOLDER]]"
 
-# The build-time exploit override in app.js (auto | umtx2 | poops | p2jb | relapse).
+# The build-time exploit override in app.js (auto | umtx2 | p2jb | relapse).
 # Defaults to "auto" (firmware routing) unless FORCE_EXPLOIT is set.
 DEFAULT_EXPLOIT_MODE = "auto"
-EXPLOIT_MODES = ("auto", "umtx2", "poops", "p2jb", "relapse")
+EXPLOIT_MODES = ("auto", "umtx2", "p2jb", "relapse")
 
 
 def get_version_info_with_handoff(dist_dir):
@@ -169,30 +172,13 @@ def compress_entry(data):
     return comp, True
 
 
-# The autoloader iframe loads poops.html with this exact query string. AppCache
-# matches URLs exactly (query included), so the manifest must list the full URL
-# or the console serves a fallback document instead of the exploit page. The
-# app now lives under /app/<version>/, so the URL is prefixed with that. Keep
-# in sync with POOPS_URL in frontend/autoloader/app.js (which resolves to the
-# same absolute path from the versioned app dir). The trailing v= matches
-# slopkit's ROUTE_VERSION cache-bust (see the patch regeneration notes in
 # Autoload ELF names the splash choice can select. AppCache matches URLs
 # exactly (query included), so every variant must be listed. Keep in sync
 # with buildExploitUrls() in frontend/autoloader/app.js.
 AUTOLOAD_ELF_NAMES = ("payload.elf", "elf-launcher.elf")
 
 
-def poops_iframe_url(app_dir, autoload="payload.elf"):
-    return (
-        app_dir + "/slopkit/slopkit/poops.html"
-        "?go=1&auto=1&production=1&trigger=netcontrol&attempts=8"
-        "&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate"
-        ",ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5"
-        "&log=debug&payload=1&autoload=" + autoload + "&v=final"
-    )
-
-
-# Same for p2jb (FW 12.02-12.70): upstream's canonical production query plus
+# p2jb (FW 12.02-12.70, force-only): upstream's canonical production query plus
 # our autoload key (relaxed in patches/slopkit-autoload.patch). Keep in sync
 # with buildExploitUrls() in frontend/autoloader/app.js.
 def p2jb_iframe_url(app_dir, autoload="payload.elf"):
@@ -269,7 +255,6 @@ def build_manifest(files, version, build_time, app_dir, pointer_path, marker_pat
     cache_entries.sort()
     lines += cache_entries
     for autoload in AUTOLOAD_ELF_NAMES:
-        lines.append(poops_iframe_url(app_dir, autoload))
         lines.append(p2jb_iframe_url(app_dir, autoload))
         lines.append(umtx2_iframe_url(app_dir, autoload))
         lines.append(relapse_iframe_url(app_dir, autoload))

@@ -69,3 +69,10 @@ __pycache__/
 !frontend/autoloader/relapse/payloads/
 !frontend/autoloader/relapse/payloads/elfldr-ps5-1360.elf
 !frontend/autoloader/relapse/payloads/kexp_2026_05_25.bin
+
+# Same binaries in docs/ (GitHub Pages). Without these, Relapse kexp 404s.
+!docs/relapse/payloads/
+!docs/relapse/payloads/elfldr-ps5-1360.elf
+!docs/relapse/payloads/kexp_2026_05_25.bin
+!docs/payloads/elf-launcher.elf
+!docs/payloads/payload.elf

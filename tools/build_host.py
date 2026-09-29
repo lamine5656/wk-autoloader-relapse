@@ -58,6 +58,8 @@ def include_in_zip(rel):
         return name.startswith("kexp") and name.endswith(".bin")
     if rel == "slopkit/readme.png":
         return False
+    if rel.endswith("/poops.html") or rel.endswith("/poops.js") or rel.endswith("poops.html") or rel.endswith("poops.js"):
+        return False
     if rel.endswith(".sha256"):
         return False
     return True
@@ -116,7 +118,7 @@ def build_zip(frontend_dir, overrides_dir, version, build_time, payload_path=Non
                 data = data.replace(BUILD_TIME_TOKEN, build_time.encode("utf-8"))
                 zf.writestr(rel, data)
             elif rel == "app.js":
-                # Build-time exploit override (auto | umtx2 | poops | p2jb),
+                # Build-time exploit override (auto | umtx2 | p2jb | relapse),
                 # from the FORCE_EXPLOIT env - same token as the ELF build.
                 with open(file_map[rel], "rb") as f:
                     data = f.read()

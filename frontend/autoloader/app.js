@@ -57,7 +57,7 @@
   }
 
   /* Build-time exploit override: "auto" (firmware table), "umtx2",
-     "relapse", or legacy "poops"/"p2jb" (force-only; not used by the default
+     "relapse", or legacy "p2jb" (force-only; not used by the default
      picker). Replaced by tools/gen_file_registry.py / build_host.py /
      dev_server.py from the FORCE_EXPLOIT env (default "auto"); left as the
      raw placeholder when served straight from source -> auto. A ?force=
@@ -67,11 +67,10 @@
 
   /* Firmwares supported by each exploit, keyed on the exact UA firmware
      string (/PlayStation 5/x.xx/). Default auto path: umtx2 = 1.xx-5.xx,
-     relapse = 7.00-13.60 (and other Relapse-supported 7-13.xx). poops/p2jb
-     lists remain only for ?force= / FORCE_EXPLOIT overrides. */
+     relapse = 7.00-13.60 (and other Relapse-supported 7-13.xx). p2jb
+     remains only for ?force= / FORCE_EXPLOIT overrides. */
   var UMTX2_FIRMWARES = ["1.00", "1.01", "1.02", "1.05", "1.10", "1.11", "1.12", "1.13", "1.14", "2.00", "2.20", "2.25", "2.26", "2.30", "2.50", "2.70", "3.00", "3.10", "3.20", "3.21", "4.00", "4.02", "4.03", "4.50", "4.51", "5.00", "5.02", "5.10", "5.50"];
-  /* Legacy slopkit chains - kept for force=poops / force=p2jb only. */
-  var POOPS_FIRMWARES = ["7.00", "7.01", "7.20", "7.40", "7.60", "7.61", "8.00", "8.20", "8.40", "8.60", "9.00", "9.05", "9.20", "9.40", "9.60", "10.00", "10.01", "10.20", "10.40", "10.60", "11.00", "11.20", "11.40", "11.60", "12.00"];
+  /* Legacy slopkit chain - kept for force=p2jb only. */
   var P2JB_FIRMWARES = ["12.02", "12.20", "12.40", "12.60", "12.70"];
   /* Relapse kernel chain (vendored under frontend/autoloader/relapse/).
      Keep in sync with relapse/src/firmware.js. Default picker also routes
@@ -133,14 +132,12 @@
   function buildExploitUrls(autoloadName) {
     return {
       umtx2: 'umtx2/index.html?autoload=' + autoloadName + '&v=1',
-      poops: 'slopkit/slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&autoload=' + autoloadName + '&v=final',
       p2jb: 'slopkit/slopkit/p2jb.html?go=1&auto=1&production=1&log=debug&payload=1&autoload=' + autoloadName + '&v=final',
       relapse: 'relapse/index.html?autoload=' + autoloadName + '&v=1'
     };
   }
 
   var UMTX2_URL = '';
-  var POOPS_URL = '';
   var P2JB_URL = '';
   var RELAPSE_URL = '';
   var EXPLOIT_URL = '';
@@ -247,11 +244,11 @@
   }
 
   /* User-facing chain labels. Default path is Relapse (7.00-13.60);
-     poops/p2jb remain internal force-only ids and are not advertised. */
+     p2jb remains an internal force-only id and is not advertised. */
   function formatChainLabel(chain) {
     if (chain === 'relapse') return 'Relapse';
     if (chain === 'umtx2') return 'umtx2';
-    if (chain === 'poops' || chain === 'p2jb') return chain; /* force= only */
+    if (chain === 'p2jb') return chain; /* force= only */
     return chain || '-';
   }
 
@@ -316,20 +313,20 @@
      ?force= query on this page) bypass the firmware table so a specific chain
      can be exercised on any firmware - the exploit page's own firmware guard
      still applies. Default auto: umtx2 (1-5.xx) | relapse (7.00-13.60).
-     poops/p2jb are force-only. Returns 'umtx2' | 'poops' | 'p2jb' | 'relapse' | null. */
+     p2jb is force-only. Returns 'umtx2' | 'p2jb' | 'relapse' | null. */
   function pickExploit() {
     var fw = detectFirmware();
     var forced = null;
     try {
       var q = new URLSearchParams(window.location.search).get('force');
-      if (q === 'umtx2' || q === 'poops' || q === 'p2jb' || q === 'relapse') forced = q;
+      if (q === 'umtx2' || q === 'p2jb' || q === 'relapse') forced = q;
     } catch (e) { }
     if (forced) {
       uiLog('[force] using ' + forced + ' on firmware ' + (fw ? fw.str : 'unknown'), 'warning');
       return forced;
     }
-    if (EXPLOIT_MODE === 'umtx2' || EXPLOIT_MODE === 'poops'
-      || EXPLOIT_MODE === 'p2jb' || EXPLOIT_MODE === 'relapse') {
+    if (EXPLOIT_MODE === 'umtx2' || EXPLOIT_MODE === 'p2jb'
+      || EXPLOIT_MODE === 'relapse') {
       uiLog('[force] using ' + EXPLOIT_MODE + ' on firmware ' + (fw ? fw.str : 'unknown'), 'warning');
       return EXPLOIT_MODE;
     }
@@ -339,7 +336,7 @@
     }
     if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1
       || (fw.num >= 1.0 && fw.num < 6.0)) return 'umtx2';
-    /* Default path: Relapse for ALL 7.00-13.60 (poops/p2jb not selected). */
+    /* Default path: Relapse for ALL 7.00-13.60. */
     if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1
       || (fw.num >= 7.0 && fw.num <= 13.60)) return 'relapse';
     uiLog('Unsupported firmware ' + fw.str, 'error');
@@ -1320,9 +1317,16 @@
     }
   }
 
-  /* Mirror Relapse's #console log (div lines with [+]/[-] markers) from
-     the same-origin exploit iframe into our log view. */
+  /* Mirror Relapse's #console log (div lines with [+]/[-] markers).
+     #logWrapper stays hidden during the run, so also copy the last line
+     into #statusMsg - otherwise a hang looks like a silent 76% soft-fill. */
   var relapseMirroredLines = 0;
+  var relapseSawConsole = false;
+  function setRelapseStatus(text) {
+    if (!statusMsgEl || !text) return;
+    var shown = text.replace(/^\[[+*-]\]\s*/, '');
+    if (statusMsgEl.textContent !== shown) statusMsgEl.textContent = shown;
+  }
   function mirrorRelapse() {
     var doc;
     try {
@@ -1331,6 +1335,14 @@
       return;
     }
     if (!doc || !chainStarted) return;
+    var frameUrl = '';
+    try { frameUrl = exploitEl.contentWindow.location.href; } catch (eU) { }
+    if (frameUrl && frameUrl !== 'about:blank' && doc.readyState === 'complete'
+      && frameUrl.indexOf('relapse/') === -1 && !mirrorRelapse.badUrl) {
+      mirrorRelapse.badUrl = frameUrl;
+      setRelapseStatus('Relapse iframe did not load');
+      uiLog('[iframe] expected relapse/index.html, got ' + frameUrl, 'error');
+    }
     var lines = doc.querySelectorAll('#console > div');
     if (lines.length < relapseMirroredLines) {
       relapseMirroredLines = 0;
@@ -1339,10 +1351,18 @@
       var el = lines[relapseMirroredLines];
       var textLine = (el.textContent || '').trim();
       if (!textLine) continue;
+      relapseSawConsole = true;
       var kind = 'info';
       if (/^\[-\]/.test(textLine) || /error|fail/i.test(textLine)) kind = 'error';
       else if (/^\[\+\]/.test(textLine) || /success|complete|listening/i.test(textLine)) kind = 'success';
       else if (/warning|warn/i.test(textLine)) kind = 'warning';
+      setRelapseStatus(textLine);
+      if (/Offsets ready|Firmware:/.test(textLine)) bumpProgressFloor(10);
+      else if (/Starting WebKit/.test(textLine)) bumpProgressFloor(18);
+      else if (/ARW ready|WebKit base/.test(textLine)) bumpProgressFloor(32);
+      else if (/Worker/.test(textLine)) bumpProgressFloor(48);
+      else if (/kernel/.test(textLine)) bumpProgressFloor(70);
+      else if (/elfldr|listening on port 9021/.test(textLine)) bumpProgressFloor(88);
       uiLog('[relapse] ' + textLine, kind);
     }
   }
@@ -1360,7 +1380,6 @@
       mirrorP2jb();
       return;
     }
-    mirrorSlopkit();
   }
 
   function start() {
@@ -1402,13 +1421,11 @@
     var autoloadName = autoloadElfName();
     var urls = buildExploitUrls(autoloadName);
     UMTX2_URL = urls.umtx2;
-    POOPS_URL = urls.poops;
     P2JB_URL = urls.p2jb;
     RELAPSE_URL = urls.relapse;
     EXPLOIT_URL = picked === 'umtx2' ? UMTX2_URL
       : picked === 'p2jb' ? P2JB_URL
-        : picked === 'relapse' ? RELAPSE_URL
-          : POOPS_URL;
+        : RELAPSE_URL;
     uiLog('Post-JB launcher: ' + (launcherChoice === CHOICE_ELF_LAUNCHER
       ? 'elf-launcher (' + autoloadName + ')'
       : 'Payload Manager (' + autoloadName + ')'), 'info');
@@ -1420,7 +1437,7 @@
 
     /* umtx2 auto-runs its chain on load when sessionStorage 'on_load_autorun'
        is set (it clears it itself once main() starts); clear it on the
-       poops/p2jb paths so a stale key never re-triggers it.
+       p2jb path so a stale key never re-triggers it.
        wkal_autoload mirrors the chosen ELF name for umtx2's sessionStorage
        fallback (patches/umtx2-autoload.patch). */
     try {
@@ -1437,12 +1454,19 @@
     } catch (e) { }
 
     chainStarted = true;
-    if (picked === 'poops' || picked === 'p2jb') {
+    if (picked === 'p2jb') {
       clearSlopkitState();
     }
     try {
       exploitEl.src = EXPLOIT_URL;
     } catch (e) { }
+
+    if (picked === 'relapse') {
+      setTimeout(function () {
+        if (progressDone || relapseSawConsole) return;
+        setRelapseStatus('Relapse produced no log - iframe or module may have failed to load');
+      }, 12000);
+    }
 
     setTimeout(revealExploit, 500);
   }
