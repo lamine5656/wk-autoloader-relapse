@@ -1514,64 +1514,6 @@
   }
 
 
-  /* Docs/Pages only: clear Application Cache + origin storage, then reload.
-     Never calls /clear-webkit-data — that route is gone from the installer ELF
-     (OS WebKit wipe+relaunch caused the install reopen loop at ~90%).
-     Uses only PS5-WebKit-safe APIs (no Cache Storage / async await). */
-  var clearCacheReloading = false;
-  function clearClientCaches() {
-    try {
-      if (window.localStorage) localStorage.clear();
-    } catch (e) { }
-    try {
-      if (window.sessionStorage) sessionStorage.clear();
-    } catch (e) { }
-    try {
-      if (typeof applicationCache !== 'undefined' && applicationCache) {
-        try {
-          if (applicationCache.status === applicationCache.UPDATEREADY) {
-            applicationCache.swapCache();
-          }
-        } catch (e2) { }
-        try { applicationCache.update(); } catch (e3) { }
-      }
-    } catch (e4) { }
-  }
-  function reloadAfterClearCache() {
-    if (clearCacheReloading) return;
-    clearCacheReloading = true;
-    try {
-      location.reload(true);
-    } catch (e) {
-      try { location.href = String(location.href).split('#')[0]; } catch (e2) { }
-    }
-  }
-  function runClearCache() {
-    var ids = ['clearCacheBtn', 'clearCacheBtnProgress'];
-    for (var i = 0; i < ids.length; i++) {
-      var b = document.getElementById(ids[i]);
-      if (b) {
-        b.disabled = true;
-        b.textContent = 'Clearing\u2026';
-      }
-    }
-    clearClientCaches();
-    setTimeout(reloadAfterClearCache, 350);
-  }
-  function bindClearCacheButtons() {
-    var ids = ['clearCacheBtn', 'clearCacheBtnProgress'];
-    for (var i = 0; i < ids.length; i++) {
-      (function (id) {
-        var btn = document.getElementById(id);
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-          if (clearCacheReloading) return;
-          runClearCache();
-        });
-      })(ids[i]);
-    }
-  }
-
   function bindLauncherChoiceUi() {
     launcherChoice = loadLauncherChoice();
     updateDetectUi();
@@ -1670,5 +1612,4 @@
      before arming the exploit. A saved Auto-start preference arms a short
      cancellable countdown instead. */
   window.addEventListener('load', bindLauncherChoiceUi);
-  window.addEventListener('load', bindClearCacheButtons);
 })();
