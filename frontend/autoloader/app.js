@@ -57,7 +57,7 @@
   }
 
   /* Build-time exploit override: "auto" (firmware table), "umtx2", "poops"
-     (7.00-12.00) or "p2jb" (12.02-12.70). Replaced by
+     (7.00-12.00), "p2jb" (12.02-12.70), or "relapse" (13.xx). Replaced by
      tools/gen_file_registry.py / build_host.py / dev_server.py from the
      FORCE_EXPLOIT env (default "auto"); left as the raw placeholder when
      served straight from source -> auto. A ?force= query on this page
@@ -71,11 +71,10 @@
   var UMTX2_FIRMWARES = ["1.00", "1.01", "1.02", "1.05", "1.10", "1.11", "1.12", "1.13", "1.14", "2.00", "2.20", "2.25", "2.26", "2.30", "2.50", "2.70", "3.00", "3.10", "3.20", "3.21", "4.00", "4.02", "4.03", "4.50", "4.51", "5.00", "5.02", "5.10", "5.50"];
   var POOPS_FIRMWARES = ["7.00", "7.01", "7.20", "7.40", "7.60", "7.61", "8.00", "8.20", "8.40", "8.60", "9.00", "9.05", "9.20", "9.40", "9.60", "10.00", "10.01", "10.20", "10.40", "10.60", "11.00", "11.20", "11.40", "11.60", "12.00"];
   var P2JB_FIRMWARES = ["12.02", "12.20", "12.40", "12.60", "12.70"];
-  /* Public WebKit userland offset profiles exist for these firmwares
-     (see third_party/public-offsets/13.xx/), but there is NO public kernel
-     exploit / full JB chain. pickExploit returns 'research_ul' so the UI
-     refuses to auto-run umtx2/poops/p2jb. */
-  var RESEARCH_OR_USERLAND_FIRMWARES = ["13.00", "13.20", "13.40", "13.60"];
+  /* Relapse kernel chain (vendored under frontend/autoloader/relapse/).
+     Keep in sync with relapse/src/firmware.js 13.xx entries. Any other 13.xx
+     UA also routes here; Relapse's own firmware guard rejects unknowns. */
+  var RELAPSE_FIRMWARES = ["13.00", "13.20", "13.40", "13.42", "13.60"];
 
   /* Post-JB launcher preference (localStorage). Values:
        payload-manager -> frontend/autoloader/payloads/payload.elf
@@ -132,13 +131,15 @@
     return {
       umtx2: 'umtx2/index.html?autoload=' + autoloadName + '&v=1',
       poops: 'slopkit/slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&autoload=' + autoloadName + '&v=final',
-      p2jb: 'slopkit/slopkit/p2jb.html?go=1&auto=1&production=1&log=debug&payload=1&autoload=' + autoloadName + '&v=final'
+      p2jb: 'slopkit/slopkit/p2jb.html?go=1&auto=1&production=1&log=debug&payload=1&autoload=' + autoloadName + '&v=final',
+      relapse: 'relapse/index.html?autoload=' + autoloadName + '&v=1'
     };
   }
 
   var UMTX2_URL = '';
   var POOPS_URL = '';
   var P2JB_URL = '';
+  var RELAPSE_URL = '';
   var EXPLOIT_URL = '';
   var exploitMode = null;
 
@@ -302,20 +303,20 @@
   /* Choose which exploit to arm. Forced modes (build-time EXPLOIT_MODE or a
      ?force= query on this page) bypass the firmware table so a specific chain
      can be exercised on any firmware - the exploit page's own firmware guard
-     still applies. Returns 'umtx2' | 'poops' | 'p2jb' | 'research_ul' | null. */
+     still applies. Returns 'umtx2' | 'poops' | 'p2jb' | 'relapse' | null. */
   function pickExploit() {
     var fw = detectFirmware();
     var forced = null;
     try {
       var q = new URLSearchParams(window.location.search).get('force');
-      if (q === 'umtx2' || q === 'poops' || q === 'p2jb') forced = q;
+      if (q === 'umtx2' || q === 'poops' || q === 'p2jb' || q === 'relapse') forced = q;
     } catch (e) { }
     if (forced) {
       uiLog('[force] using ' + forced + ' on firmware ' + (fw ? fw.str : 'unknown'), 'warning');
       return forced;
     }
     if (EXPLOIT_MODE === 'umtx2' || EXPLOIT_MODE === 'poops'
-      || EXPLOIT_MODE === 'p2jb') {
+      || EXPLOIT_MODE === 'p2jb' || EXPLOIT_MODE === 'relapse') {
       uiLog('[force] using ' + EXPLOIT_MODE + ' on firmware ' + (fw ? fw.str : 'unknown'), 'warning');
       return EXPLOIT_MODE;
     }
@@ -326,10 +327,9 @@
     if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1) return 'umtx2';
     if (POOPS_FIRMWARES.indexOf(fw.str) !== -1) return 'poops';
     if (P2JB_FIRMWARES.indexOf(fw.str) !== -1) return 'p2jb';
-    if (RESEARCH_OR_USERLAND_FIRMWARES.indexOf(fw.str) !== -1) return 'research_ul';
-    /* Any other 13.xx UA: still refuse full JB (no public kex), even if we
-       do not ship an exact offset profile for that minor version. */
-    if (fw.num >= 13.0 && fw.num < 14.0) return 'research_ul';
+    if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1) return 'relapse';
+    /* Any other 13.xx UA: route to Relapse (its firmware.js rejects unknowns). */
+    if (fw.num >= 13.0 && fw.num < 14.0) return 'relapse';
     uiLog('Unsupported firmware ' + fw.str, 'error');
     return null;
   }
@@ -1308,9 +1308,40 @@
     }
   }
 
+  /* Mirror Relapse's #console log (div lines with [+]/[-] markers) from
+     the same-origin exploit iframe into our log view. */
+  var relapseMirroredLines = 0;
+  function mirrorRelapse() {
+    var doc;
+    try {
+      doc = exploitEl.contentDocument;
+    } catch (e) {
+      return;
+    }
+    if (!doc || !chainStarted) return;
+    var lines = doc.querySelectorAll('#console > div');
+    if (lines.length < relapseMirroredLines) {
+      relapseMirroredLines = 0;
+    }
+    for (; relapseMirroredLines < lines.length; relapseMirroredLines++) {
+      var el = lines[relapseMirroredLines];
+      var textLine = (el.textContent || '').trim();
+      if (!textLine) continue;
+      var kind = 'info';
+      if (/^\[-\]/.test(textLine) || /error|fail/i.test(textLine)) kind = 'error';
+      else if (/^\[\+\]/.test(textLine) || /success|complete|listening/i.test(textLine)) kind = 'success';
+      else if (/warning|warn/i.test(textLine)) kind = 'warning';
+      uiLog('[relapse] ' + textLine, kind);
+    }
+  }
+
   function mirrorExploit() {
     if (exploitMode === 'umtx2') {
       mirrorUmtx2();
+      return;
+    }
+    if (exploitMode === 'relapse') {
+      mirrorRelapse();
       return;
     }
     if (exploitMode === 'p2jb') {
@@ -1353,16 +1384,6 @@
       finishProgressFail('Jailbreak failed - restart your console');
       return;
     }
-    /* 13.xx: public WebKit offsets may exist, but no public kernel exploit.
-       Do NOT arm umtx2/poops/p2jb. Show an honest userland-only refusal. */
-    if (picked === 'research_ul') {
-      exploitMode = null;
-      setMeta(fw ? fw.str : '-', 'research_ul');
-      uiLog('Firmware ' + (fw ? fw.str : '?') + ' is not supported yet.', 'warning');
-      finishProgressFail('This firmware is not supported yet');
-      setTimeout(revealExploit, 800);
-      return;
-    }
     exploitMode = picked;
     setMeta(fw ? fw.str : '-', picked);
 
@@ -1371,9 +1392,11 @@
     UMTX2_URL = urls.umtx2;
     POOPS_URL = urls.poops;
     P2JB_URL = urls.p2jb;
+    RELAPSE_URL = urls.relapse;
     EXPLOIT_URL = picked === 'umtx2' ? UMTX2_URL
       : picked === 'p2jb' ? P2JB_URL
-        : POOPS_URL;
+        : picked === 'relapse' ? RELAPSE_URL
+          : POOPS_URL;
     uiLog('Post-JB launcher: ' + (launcherChoice === CHOICE_ELF_LAUNCHER
       ? 'elf-launcher (' + autoloadName + ')'
       : 'Payload Manager (' + autoloadName + ')'), 'info');
@@ -1391,6 +1414,9 @@
     try {
       if (picked === 'umtx2') {
         sessionStorage.setItem('on_load_autorun', 'kernel');
+        sessionStorage.setItem('wkal_autoload', autoloadName);
+      } else if (picked === 'relapse') {
+        sessionStorage.removeItem('on_load_autorun');
         sessionStorage.setItem('wkal_autoload', autoloadName);
       } else {
         sessionStorage.removeItem('on_load_autorun');
@@ -1423,8 +1449,8 @@
     if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1) chain = 'umtx2';
     else if (POOPS_FIRMWARES.indexOf(fw.str) !== -1) chain = 'poops';
     else if (P2JB_FIRMWARES.indexOf(fw.str) !== -1) chain = 'p2jb';
-    else if (RESEARCH_OR_USERLAND_FIRMWARES.indexOf(fw.str) !== -1
-      || (fw.num >= 13.0 && fw.num < 14.0)) chain = null;
+    else if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1
+      || (fw.num >= 13.0 && fw.num < 14.0)) chain = 'relapse';
     if (chain) {
       el.textContent = 'PS5 FW ' + fw.str + ' · chain ' + chain;
       el.className = 'detect-title';

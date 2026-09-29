@@ -1,4 +1,6 @@
-# WK Autoloader
+# WK Autoloader (Relapse / 13.xx)
+
+Private fork of WK Autoloader that vendors **Relapse** so PS5 firmware **13.xx** jailbreaks inside WKAL (same Payload Manager / Elf Launcher flow).
 
 <p align="center">
   <img src="assets/readme-ui.jpg" alt="WK Autoloader jailbreak UI" width="720" />
@@ -24,6 +26,7 @@ For **Elf Launcher** to show and send payloads, unpack [elf-launcher-data.zip](h
 - 1.xx-5.xx - kernel chain `umtx2`
 - 7.00-12.00 - kernel chain `poops`
 - 12.02-12.70 - kernel chain `p2jb` (about 45-50 minutes)
+- 13.xx - kernel chain `relapse` (vendored under `frontend/autoloader/relapse/`)
 
 ## Download
 
@@ -56,3 +59,18 @@ Repo: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) / release [v1
 ## Credits
 
 **X-F1REBALL-X**
+
+Relapse lineage (13.xx chain): see `frontend/autoloader/relapse/` (ntfargo / PS5-Relapse and related public research; vendored for WKAL).
+
+## Build note (this private Relapse tree)
+
+This repository is private. Rebuild `installer.elf` on a machine with the PS5 SDK after:
+
+```bash
+git submodule update --init --recursive
+./tools/download_deps.sh
+make slopkit-prepare umtx2-prepare
+# then the usual installer build (see Makefile / build_release.sh)
+```
+
+AppCache / embedded registry pick up `frontend/autoloader/relapse/` automatically via `tools/gen_file_registry.py`. Force Relapse with `?force=relapse` or `FORCE_EXPLOIT=relapse`.

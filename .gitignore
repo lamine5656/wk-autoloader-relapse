@@ -63,3 +63,9 @@ __pycache__/
 
 # refreshed menu payloads (overlaid at build)
 !third_party/public-payloads/*.elf
+
+# Vendored Relapse chain binaries (elfldr + kexp) required offline / AppCache.
+# *.elf / *.bin are ignored globally above; re-include only these two files.
+!frontend/autoloader/relapse/payloads/
+!frontend/autoloader/relapse/payloads/elfldr-ps5-1360.elf
+!frontend/autoloader/relapse/payloads/kexp_2026_05_25.bin

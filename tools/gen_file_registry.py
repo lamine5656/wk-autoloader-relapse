@@ -75,6 +75,13 @@ def include_in_registry(path):
         return name.startswith("kexp") and name.endswith(".bin")
     if "/slopkit/readme.png" in path:
         return False
+    # Relapse: keep elfldr + kexp only (optional R2 payloads are not used by WKAL;
+    # autoload ELFs come from /app/<version>/payloads/).
+    if "/relapse/payloads/" in path:
+        name = os.path.basename(path)
+        return name in ("elfldr-ps5-1360.elf", "kexp_2026_05_25.bin") or (
+            name.startswith("kexp") and name.endswith(".bin")
+        ) or name.startswith("elfldr")
     if path.endswith(".sha256"):
         return False
     return True
@@ -85,10 +92,10 @@ BUILD_TIME_PLACEHOLDER = b"[[BUILD_TIME_PLACEHOLDER]]"
 EXPLOIT_MODE_PLACEHOLDER = b"[[EXPLOIT_MODE]]"
 APP_DIR_PLACEHOLDER = b"[[APP_DIR_PLACEHOLDER]]"
 
-# The build-time exploit override in app.js (auto | umtx2 | poops | p2jb).
+# The build-time exploit override in app.js (auto | umtx2 | poops | p2jb | relapse).
 # Defaults to "auto" (firmware routing) unless FORCE_EXPLOIT is set.
 DEFAULT_EXPLOIT_MODE = "auto"
-EXPLOIT_MODES = ("auto", "umtx2", "poops", "p2jb")
+EXPLOIT_MODES = ("auto", "umtx2", "poops", "p2jb", "relapse")
 
 
 def get_version_info_with_handoff(dist_dir):
@@ -203,6 +210,12 @@ def p2jb_iframe_url(app_dir, autoload="payload.elf"):
 def umtx2_iframe_url(app_dir, autoload="payload.elf"):
     return app_dir + "/umtx2/index.html?autoload=" + autoload + "&v=1"
 
+
+# Relapse (FW 13.xx): iframe URL carries autoload + fixed cache-bust.
+# Keep in sync with buildExploitUrls() in frontend/autoloader/app.js.
+def relapse_iframe_url(app_dir, autoload="payload.elf"):
+    return app_dir + "/relapse/index.html?autoload=" + autoload + "&v=1"
+
 # slopkit references its own scripts with cache-busting query strings
 # (e.g. "./core.js?v=final", "main.js?v=final", "../offsets/9.00.js?v=final").
 # AppCache matches URLs exactly, so the manifest must list those query
@@ -231,6 +244,9 @@ def collect_cachebust_urls(files):
     for path, _ in files:
         if "/slopkit/offsets/" in path and path.endswith(".js"):
             urls.add(path + "?v=final")
+        # Relapse loads offsets/<fw>.js?v=1 (fixed; see relapse/src/main.js).
+        if "/relapse/offsets/" in path and path.endswith(".js"):
+            urls.add(path + "?v=1")
     return sorted(urls)
 
 
@@ -256,6 +272,7 @@ def build_manifest(files, version, build_time, app_dir, pointer_path, marker_pat
         lines.append(poops_iframe_url(app_dir, autoload))
         lines.append(p2jb_iframe_url(app_dir, autoload))
         lines.append(umtx2_iframe_url(app_dir, autoload))
+        lines.append(relapse_iframe_url(app_dir, autoload))
     lines += collect_cachebust_urls(files)
     lines.append(pointer_path)
     lines.append(marker_path)
