@@ -3,7 +3,7 @@
 Private fork of WK Autoloader that vendors **Relapse** so PS5 firmware **7.00–13.60** jailbreaks inside WKAL (same Payload Manager / Elf Launcher flow). `umtx2` remains the default for **1.xx–5.xx**.
 
 <p align="center">
-  <img src="assets/readme-ui.jpg" alt="WK Autoloader jailbreak UI" width="720" />
+  <img src="assets/readme-ui-relapse.jpg" alt="WK Autoloader Relapse UI (FW 7.00-13.60)" width="720" />
 </p>
 
 WK Autoloader is installable homebrew for the PS5. It serves a jailbreak UI in the PS5 browser on port **1022**.
@@ -54,6 +54,16 @@ On the console `:1000` UI ([elf-launcher](https://github.com/X-F1REBALL-X/elf-la
 - Payload tree: unpack [elf-launcher-data.zip](https://github.com/X-F1REBALL-X/elf-launcher/releases/download/v1.0.5/elf-launcher-data.zip) into `/data/elf-launcher` (same payload set as v1.0.3/v1.0.4; also linked from [latest release](https://github.com/X-F1REBALL-X/elf-launcher/releases/latest)).
 
 Repo: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) / release [v1.0.5](https://github.com/X-F1REBALL-X/elf-launcher/releases/tag/v1.0.5)
+
+## Screenshots
+
+Local captures of the Relapse default UI (no `poops` labels):
+
+- `docs/screenshots/01-splash-relapse-13.60.png` — splash / launcher choice (`Supported FW … 7.00-13.60 · Relapse`, detect `chain Relapse`)
+- `docs/screenshots/02-jailbreak-progress-relapse-13.60.png` — jailbreak progress (`FW 13.60 · chain Relapse`)
+- `docs/screenshots/03-jailbreak-meta-relapse-13.60.png` — same progress view after Start
+
+Also mirrored under `screenshots/` and `/workspace/artifacts/screenshots/`.
 
 ## Credits
 

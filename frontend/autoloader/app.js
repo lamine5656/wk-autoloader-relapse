@@ -246,13 +246,22 @@
     }, 1000);
   }
 
+  /* User-facing chain labels. Default path is Relapse (7.00-13.60);
+     poops/p2jb remain internal force-only ids and are not advertised. */
+  function formatChainLabel(chain) {
+    if (chain === 'relapse') return 'Relapse';
+    if (chain === 'umtx2') return 'umtx2';
+    if (chain === 'poops' || chain === 'p2jb') return chain; /* force= only */
+    return chain || '-';
+  }
+
   function setMeta(fwStr, chain) {
     if (!metaMsgEl) return;
     if (chain === 'research_ul' || chain === 'userland only') {
       metaMsgEl.textContent = 'FW ' + (fwStr || '-') + ' · not supported';
       return;
     }
-    metaMsgEl.textContent = 'FW ' + (fwStr || '-') + ' · chain ' + (chain || '-');
+    metaMsgEl.textContent = 'FW ' + (fwStr || '-') + ' · chain ' + formatChainLabel(chain);
   }
 
   function finishProgressSuccess(message) {
@@ -1454,7 +1463,7 @@
     else if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1
       || (fw.num >= 7.0 && fw.num <= 13.60)) chain = 'relapse';
     if (chain) {
-      el.textContent = 'PS5 FW ' + fw.str + ' · chain ' + chain;
+      el.textContent = 'PS5 FW ' + fw.str + ' · chain ' + formatChainLabel(chain);
       el.className = 'detect-title';
     } else {
       el.textContent = 'PS5 FW ' + fw.str + ' · not supported';
