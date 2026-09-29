@@ -44,13 +44,14 @@ For **Elf Launcher** to show and send payloads, unpack [elf-launcher-data.zip](h
 4. In Elf Launcher (`http://127.0.0.1:1000/`) press **Refresh** (Triangle).
 5. Open the folder and press **Send** (English label) to load the ELF into elfldr (`9021`).
 
-On the console `:1000` UI ([elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) `v1.0.4`):
+On the console `:1000` UI ([elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) `v1.0.5`):
 
 - **Send** always re-sends; the row may show **Active** / **Sent** after a successful load.
 - **Kill** appears on the row after a successful send / Active / Sent (PS5 + `:1000`).
-- **Update** is a glowing gold button shown only when a local `/data/elf-launcher` file is missing or outdated vs the catalog. It is never shown as a dead control, and it is hidden on GitHub Pages.
+- **Update** is a glowing gold button (brighter gradient + outer glow) shown only when a local `/data/elf-launcher` file is missing or outdated vs the catalog. It is never shown as a dead control, and it is hidden on GitHub Pages.
+- Payload tree: unpack [elf-launcher-data.zip](https://github.com/X-F1REBALL-X/elf-launcher/releases/download/v1.0.5/elf-launcher-data.zip) into `/data/elf-launcher` (same payload set as v1.0.3/v1.0.4; also linked from [latest release](https://github.com/X-F1REBALL-X/elf-launcher/releases/latest)).
 
-Repo: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher)
+Repo: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) / release [v1.0.5](https://github.com/X-F1REBALL-X/elf-launcher/releases/tag/v1.0.5)
 
 ## Credits
 
