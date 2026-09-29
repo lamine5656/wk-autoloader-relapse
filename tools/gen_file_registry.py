@@ -211,7 +211,7 @@ def umtx2_iframe_url(app_dir, autoload="payload.elf"):
     return app_dir + "/umtx2/index.html?autoload=" + autoload + "&v=1"
 
 
-# Relapse (FW 13.xx): iframe URL carries autoload + fixed cache-bust.
+# Relapse (FW 7.00-13.60 default): iframe URL carries autoload + fixed cache-bust.
 # Keep in sync with buildExploitUrls() in frontend/autoloader/app.js.
 def relapse_iframe_url(app_dir, autoload="payload.elf"):
     return app_dir + "/relapse/index.html?autoload=" + autoload + "&v=1"

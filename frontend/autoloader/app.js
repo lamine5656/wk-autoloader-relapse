@@ -56,25 +56,28 @@
     } catch (e) { }
   }
 
-  /* Build-time exploit override: "auto" (firmware table), "umtx2", "poops"
-     (7.00-12.00), "p2jb" (12.02-12.70), or "relapse" (13.xx). Replaced by
-     tools/gen_file_registry.py / build_host.py / dev_server.py from the
-     FORCE_EXPLOIT env (default "auto"); left as the raw placeholder when
-     served straight from source -> auto. A ?force= query on this page
-     overrides it at runtime (handy for make dev). */
+  /* Build-time exploit override: "auto" (firmware table), "umtx2",
+     "relapse", or legacy "poops"/"p2jb" (force-only; not used by the default
+     picker). Replaced by tools/gen_file_registry.py / build_host.py /
+     dev_server.py from the FORCE_EXPLOIT env (default "auto"); left as the
+     raw placeholder when served straight from source -> auto. A ?force=
+     query on this page overrides it at runtime (handy for make dev). */
   var EXPLOIT_MODE = '[[EXPLOIT_MODE]]';
   if (EXPLOIT_MODE.indexOf('[[') === 0) EXPLOIT_MODE = 'auto';
 
   /* Firmwares supported by each exploit, keyed on the exact UA firmware
-     string (/PlayStation 5/x.xx/). Keep in sync with the exploits' own lists:
-     umtx2/document/en/ps5/main.js and slopkit/slopkit/main.js. */
+     string (/PlayStation 5/x.xx/). Default auto path: umtx2 = 1.xx-5.xx,
+     relapse = 7.00-13.60 (and other Relapse-supported 7-13.xx). poops/p2jb
+     lists remain only for ?force= / FORCE_EXPLOIT overrides. */
   var UMTX2_FIRMWARES = ["1.00", "1.01", "1.02", "1.05", "1.10", "1.11", "1.12", "1.13", "1.14", "2.00", "2.20", "2.25", "2.26", "2.30", "2.50", "2.70", "3.00", "3.10", "3.20", "3.21", "4.00", "4.02", "4.03", "4.50", "4.51", "5.00", "5.02", "5.10", "5.50"];
+  /* Legacy slopkit chains - kept for force=poops / force=p2jb only. */
   var POOPS_FIRMWARES = ["7.00", "7.01", "7.20", "7.40", "7.60", "7.61", "8.00", "8.20", "8.40", "8.60", "9.00", "9.05", "9.20", "9.40", "9.60", "10.00", "10.01", "10.20", "10.40", "10.60", "11.00", "11.20", "11.40", "11.60", "12.00"];
   var P2JB_FIRMWARES = ["12.02", "12.20", "12.40", "12.60", "12.70"];
   /* Relapse kernel chain (vendored under frontend/autoloader/relapse/).
-     Keep in sync with relapse/src/firmware.js 13.xx entries. Any other 13.xx
-     UA also routes here; Relapse's own firmware guard rejects unknowns. */
-  var RELAPSE_FIRMWARES = ["13.00", "13.20", "13.40", "13.42", "13.60"];
+     Keep in sync with relapse/src/firmware.js. Default picker also routes
+     any other 7.00-13.60 UA here; Relapse's own firmware guard rejects
+     unknowns. research_ul / "not supported" is not used for this range. */
+  var RELAPSE_FIRMWARES = ["7.00", "7.01", "7.20", "7.40", "7.60", "7.61", "8.00", "8.20", "8.40", "8.60", "9.00", "9.20", "9.40", "9.60", "10.00", "10.01", "10.20", "10.40", "10.60", "11.00", "11.20", "11.60", "12.00", "12.02", "12.20", "12.40", "12.60", "12.70", "13.00", "13.20", "13.40", "13.42", "13.60"];
 
   /* Post-JB launcher preference (localStorage). Values:
        payload-manager -> frontend/autoloader/payloads/payload.elf
@@ -303,7 +306,8 @@
   /* Choose which exploit to arm. Forced modes (build-time EXPLOIT_MODE or a
      ?force= query on this page) bypass the firmware table so a specific chain
      can be exercised on any firmware - the exploit page's own firmware guard
-     still applies. Returns 'umtx2' | 'poops' | 'p2jb' | 'relapse' | null. */
+     still applies. Default auto: umtx2 (1-5.xx) | relapse (7.00-13.60).
+     poops/p2jb are force-only. Returns 'umtx2' | 'poops' | 'p2jb' | 'relapse' | null. */
   function pickExploit() {
     var fw = detectFirmware();
     var forced = null;
@@ -324,12 +328,11 @@
       uiLog('[ERROR] Not a PlayStation 5 browser.', 'error');
       return null;
     }
-    if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1) return 'umtx2';
-    if (POOPS_FIRMWARES.indexOf(fw.str) !== -1) return 'poops';
-    if (P2JB_FIRMWARES.indexOf(fw.str) !== -1) return 'p2jb';
-    if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1) return 'relapse';
-    /* Any other 13.xx UA: route to Relapse (its firmware.js rejects unknowns). */
-    if (fw.num >= 13.0 && fw.num < 14.0) return 'relapse';
+    if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1
+      || (fw.num >= 1.0 && fw.num < 6.0)) return 'umtx2';
+    /* Default path: Relapse for ALL 7.00-13.60 (poops/p2jb not selected). */
+    if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1
+      || (fw.num >= 7.0 && fw.num <= 13.60)) return 'relapse';
     uiLog('Unsupported firmware ' + fw.str, 'error');
     return null;
   }
@@ -1446,11 +1449,10 @@
       return;
     }
     var chain = null;
-    if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1) chain = 'umtx2';
-    else if (POOPS_FIRMWARES.indexOf(fw.str) !== -1) chain = 'poops';
-    else if (P2JB_FIRMWARES.indexOf(fw.str) !== -1) chain = 'p2jb';
+    if (UMTX2_FIRMWARES.indexOf(fw.str) !== -1
+      || (fw.num >= 1.0 && fw.num < 6.0)) chain = 'umtx2';
     else if (RELAPSE_FIRMWARES.indexOf(fw.str) !== -1
-      || (fw.num >= 13.0 && fw.num < 14.0)) chain = 'relapse';
+      || (fw.num >= 7.0 && fw.num <= 13.60)) chain = 'relapse';
     if (chain) {
       el.textContent = 'PS5 FW ' + fw.str + ' · chain ' + chain;
       el.className = 'detect-title';

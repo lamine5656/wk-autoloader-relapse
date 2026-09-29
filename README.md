@@ -1,6 +1,6 @@
-# WK Autoloader (Relapse / 13.xx)
+# WK Autoloader (Relapse / 7–13.60)
 
-Private fork of WK Autoloader that vendors **Relapse** so PS5 firmware **13.xx** jailbreaks inside WKAL (same Payload Manager / Elf Launcher flow).
+Private fork of WK Autoloader that vendors **Relapse** so PS5 firmware **7.00–13.60** jailbreaks inside WKAL (same Payload Manager / Elf Launcher flow). `umtx2` remains the default for **1.xx–5.xx**.
 
 <p align="center">
   <img src="assets/readme-ui.jpg" alt="WK Autoloader jailbreak UI" width="720" />
@@ -24,9 +24,8 @@ For **Elf Launcher** to show and send payloads, unpack [elf-launcher-data.zip](h
 ## Supported firmware
 
 - 1.xx-5.xx - kernel chain `umtx2`
-- 7.00-12.00 - kernel chain `poops`
-- 12.02-12.70 - kernel chain `p2jb` (about 45-50 minutes)
-- 13.xx - kernel chain `relapse` (vendored under `frontend/autoloader/relapse/`)
+- 7.00-13.60 - kernel chain `relapse` only (vendored under `frontend/autoloader/relapse/`; includes 13.42 and other Relapse-supported 7–13.xx). Default picker does **not** select `poops` or `p2jb` for this range.
+- Force overrides still work: `?force=umtx2|relapse|poops|p2jb` or `FORCE_EXPLOIT=...` (legacy slopkit chains for testing only).
 
 ## Download
 
@@ -60,11 +59,21 @@ Repo: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) / release [v1
 
 **X-F1REBALL-X**
 
-Relapse lineage (13.xx chain): see `frontend/autoloader/relapse/` (ntfargo / PS5-Relapse and related public research; vendored for WKAL).
+Relapse lineage (7.00–13.60 chain): see `frontend/autoloader/relapse/` (ntfargo / PS5-Relapse and related public research; vendored for WKAL).
 
 ## Build note (this private Relapse tree)
 
-This repository is private. Relapse (13.xx) is vendored under `frontend/autoloader/relapse/` and already wired in `app.js` / `tools/gen_file_registry.py`.
+This repository is private. Relapse (7.00–13.60) is vendored under `frontend/autoloader/relapse/` and already wired in `app.js` / `tools/gen_file_registry.py`.
+
+### Firmware routing (auto)
+
+| FW range | Default chain |
+|----------|---------------|
+| 1.xx–5.xx | `umtx2` |
+| 7.00–13.60 | `relapse` |
+| other | unsupported |
+
+`poops` / `p2jb` remain available only via `?force=` / `FORCE_EXPLOIT`.
 
 ### Without the PS5 SDK (Linux box / CI preview)
 
@@ -77,7 +86,7 @@ make slopkit-prepare umtx2-prepare
 make include/.file_registry.stamp   # needs python3 + rsvg-convert (librsvg2-bin)
 ```
 
-Force Relapse with `?force=relapse` or `FORCE_EXPLOIT=relapse`.
+Force a chain with `?force=relapse|umtx2|poops|p2jb` or `FORCE_EXPLOIT=...` (default auto path is umtx2 / relapse as above).
 
 ### Remaining step: build `installer.elf` (needs PS5 SDK)
 
