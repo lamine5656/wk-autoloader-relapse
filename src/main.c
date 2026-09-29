@@ -1,10 +1,11 @@
 /*
  * PS5-WebKit-Autoloader Installer - Main Entry Point
  *
- * This is a native PS5 ELF that starts a temporary HTTP server, opens the
- * browser to cache a page (or set of pages), installs the homescreen shortcut
- * once the cache is complete (via the /install route), then exits. On
- * subsequent launches from the homescreen, the cached content loads offline.
+ * This is a native PS5 ELF that starts an HTTP server on :1022, opens the
+ * browser to AppCache the UI, installs the homescreen shortcut once the cache
+ * is complete (via /install), then keeps serving so the installer can open
+ * /app/index.html and the home icon works. /exit (or a newer installer
+ * instance) stops the server. Offline AppCache still covers later launches.
  *
  * This file handles: process init, signal setup, MHD lifecycle, shutdown.
  */
@@ -212,9 +213,11 @@ int main(void) {
              "http://127.0.0.1:%d/?v=%s%s", WKALI_PORT, WKAL_FULL_VERSION, uid_param);
     ps5_launch_browser(browser_url);
 
-    /* Main loop - runs until /install succeeds (which also installs the
-     * homescreen app) and sets http_keep_running to 0 */
+    /* Main loop - /install installs the homescreen app but keeps :1022 up so
+     * the installer can open /app/index.html and the home icon works. Stops
+     * only on /exit (or process kill / next installer instance). */
     int webkit_clear_attempts = 0;
+    int install_notified = 0;
 
     while (atomic_load(&http_keep_running)) {
         /* Check if the frontend requested a WebKit data clear */
@@ -237,15 +240,15 @@ int main(void) {
                           webkit_clear_attempts);
             }
         }
+        if (!install_notified && atomic_load(&install_completed)) {
+            install_notified = 1;
+            wkali_notify("WK Autoloader cached successfully!");
+            wkali_log("[WKALI] Install complete — server stays on :%d for UI/home icon\n",
+                      WKALI_PORT);
+        }
         usleep(100000); /* 100ms sleep */
     }
 
-    if (atomic_load(&install_completed)) {
-        wkali_notify("WK Autoloader cached successfully!");
-        /* Brief pause so the success UI can paint, then go Home - closes browser. */
-        usleep(800000);
-        ps5_return_to_home();
-    }
     wkali_log_wakeup();
 
     /* Give the /logs thread half a second to wake up and flush the final logs 

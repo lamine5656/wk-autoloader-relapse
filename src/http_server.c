@@ -1,7 +1,8 @@
 /*
  * HTTP Server - serves the cached frontend files from the generated file
  * registry and handles the /install route (installs the homescreen app once
- * the cache is complete and shuts the server down).
+ * the cache is complete). The daemon stays up after /install so the UI and
+ * home-icon deeplink on :1022 keep working; /exit stops the server.
  */
 
 #include <stdio.h>
@@ -93,13 +94,16 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
          * server stays up and the page tells the user to re-run the installer. */
         int err = wkali_install_app();
         if (err == 0) {
-            wkali_log("[WKALI] App installed. Stopping server...\n");
+            /* Keep :1022 up so installer-page can navigate to /app/index.html
+             * and the home-icon deeplink works while this ELF is resident.
+             * AppCache still enables offline relaunch later; /exit stops us. */
+            wkali_log("[WKALI] App installed. Keeping HTTP server on :%d\n",
+                      WKALI_PORT);
             resp = MHD_create_response_from_buffer(strlen("OK"), (void *)"OK",
                                                    MHD_RESPMEM_PERSISTENT);
             MHD_add_response_header(resp, "Content-Type", "text/plain");
             http_status = MHD_HTTP_OK;
             atomic_store(&install_completed, 1);
-            atomic_store(&http_keep_running, 0);
         } else {
             wkali_log("[WKALI] App install failed (%d). Staying up.\n", err);
             const char *fail = "Install failed";

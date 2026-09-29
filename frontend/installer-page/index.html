@@ -32,7 +32,7 @@
     <p id="status">Updating version…</p>
     <div id="progressWrap"><div id="progressBar"></div></div>
     <div id="progressPct">0%</div>
-    <div id="successMsg">Updated successfully<br>Close the page</div>
+    <div id="successMsg">Updated successfully<br>Opening WK Autoloader…</div>
   </main>
   <footer id="footer"><b>Created by X-F1REBALL-X</b></footer>
   <script>
@@ -41,7 +41,7 @@
     var statusEl=document.getElementById('status');
     var progressBar=document.getElementById('progressBar');
     var progressPct=document.getElementById('progressPct');
-    var completed=false,isDownloading=false,isRetry=false,currentUid='',simulateCorrupt=false,cacheRecoverStarted=false,probeOk=false;
+    var completed=false,isDownloading=false,isRetry=false,currentUid='',simulateCorrupt=false,cacheRecoverStarted=false,probeOk=false,cacheReady=false;
     var AUTOLOADER_URL='/app/index.html';
     (function(){
       var p=new URLSearchParams(window.location.search);
@@ -79,21 +79,45 @@
       xhr.open('GET','/install',true); xhr.timeout=30000;
       xhr.onreadystatechange=function(){
         if(xhr.readyState===4){
-          if(xhr.status===200){ setInstalled(); try{window.close()}catch(e){} }
-          else { completed=false; setCaching(); setTimeout(installApp,1500); }
+          if(xhr.status===200){
+            setInstalled();
+            /* Open the WK UI while :1022 is still up (server stays after install). */
+            setTimeout(goToAutoloader, 350);
+          } else {
+            completed=false; cacheReady=false; setCaching(); setTimeout(installApp,1500);
+          }
         }
       };
-      xhr.onerror=xhr.ontimeout=function(){ completed=false; setCaching(); setTimeout(installApp,1500); };
+      xhr.onerror=xhr.ontimeout=function(){ completed=false; cacheReady=false; setCaching(); setTimeout(installApp,1500); };
       xhr.send();
     }
-    function maybeInstall(){ if(completed) return; completed=true; installApp(); }
-    /* Cache errors stay internal: auto clear+retry once, else proceed with install. No modal/banner. */
+    /* Only install after AppCache reports a finished update — never on a bare
+       IDLE poll or a short timeout (26MB tree can take minutes on console). */
+    function maybeInstall(){
+      if(completed || !cacheReady) return;
+      completed=true;
+      installApp();
+    }
+    function markCacheReadyAndInstall(){
+      if(typeof applicationCache!=='undefined' &&
+         applicationCache.status===applicationCache.UPDATEREADY){
+        try{ applicationCache.swapCache(); }catch(e){}
+      }
+      cacheReady=true;
+      maybeInstall();
+    }
+    /* Cache errors stay internal: auto clear+retry once. On retry failure do
+       not install an incomplete cache — that leaves a home icon with no page. */
     function silentCacheRecover(){
       if(cacheRecoverStarted) return;
       cacheRecoverStarted=true;
       if(isRetry){
-        /* Already cleared once — do not block installation. */
-        maybeInstall();
+        statusEl.textContent='Cache failed — close and run installer again';
+        try{
+          var ex=new XMLHttpRequest();
+          ex.open('GET','/exit',true);
+          ex.send();
+        }catch(e){}
         return;
       }
       setCaching();
@@ -101,9 +125,13 @@
       x.open('GET','/clear-webkit-data',true);
       x.timeout=30000;
       x.onreadystatechange=function(){
-        if(x.readyState===4 && x.status!==200) maybeInstall();
+        if(x.readyState===4 && x.status!==200){
+          statusEl.textContent='Cache clear failed — close and run installer again';
+        }
       };
-      x.onerror=x.ontimeout=function(){ maybeInstall(); };
+      x.onerror=x.ontimeout=function(){
+        statusEl.textContent='Cache clear failed — close and run installer again';
+      };
       x.send();
     }
     window.addEventListener('load',function(){
@@ -114,25 +142,30 @@
         if(document.body.className==='done'){ clearInterval(softTimer); return; }
         if(soft<90){ soft+=Math.max(0.4,(90-soft)*0.04); setProgress(soft); }
       },300);
-      var waitTimer=setInterval(function(){
-        if(document.body.className==='done'){ clearInterval(waitTimer); return; }
-        if(!probeOk){ clearInterval(waitTimer); goToAutoloader(); return; }
-        if(typeof applicationCache==='undefined'){ clearInterval(waitTimer); maybeInstall(); return; }
-        var st=applicationCache.status;
-        if(st===applicationCache.IDLE||st===applicationCache.UPDATEREADY){ clearInterval(waitTimer); maybeInstall(); }
-      },400);
-      if(typeof applicationCache!=='undefined'){
-        applicationCache.addEventListener('progress',function(e){
-          isDownloading=true;
-          if(e&&e.lengthComputable&&e.total>0) setProgress(Math.min(92,8+(e.loaded/e.total)*84));
-        },false);
-        applicationCache.addEventListener('cached',function(){ maybeInstall(); },false);
-        applicationCache.addEventListener('updateready',function(){ maybeInstall(); },false);
-        applicationCache.addEventListener('noupdate',function(){ maybeInstall(); },false);
-        applicationCache.addEventListener('error',function(){ if(isDownloading) silentCacheRecover(); },false);
-        applicationCache.addEventListener('obsolete',function(){ silentCacheRecover(); },false);
+      if(typeof applicationCache==='undefined'){
+        cacheReady=true;
+        maybeInstall();
+        return;
       }
-      setTimeout(function(){ if(document.body.className!=='done'&&probeOk) maybeInstall(); },45000);
+      applicationCache.addEventListener('progress',function(e){
+        isDownloading=true;
+        if(e&&e.lengthComputable&&e.total>0) setProgress(Math.min(92,8+(e.loaded/e.total)*84));
+      },false);
+      applicationCache.addEventListener('cached',function(){ markCacheReadyAndInstall(); },false);
+      applicationCache.addEventListener('updateready',function(){ markCacheReadyAndInstall(); },false);
+      applicationCache.addEventListener('noupdate',function(){ markCacheReadyAndInstall(); },false);
+      applicationCache.addEventListener('error',function(){ if(isDownloading) silentCacheRecover(); },false);
+      applicationCache.addEventListener('obsolete',function(){ silentCacheRecover(); },false);
+      /* Force an update check so we do not treat pre-check IDLE as "done". */
+      try{ applicationCache.update(); }catch(e){}
+      /* Last-resort only: large Relapse tree can take several minutes. */
+      setTimeout(function(){
+        if(document.body.className==='done'||!probeOk||completed) return;
+        var st=applicationCache.status;
+        if(st===applicationCache.IDLE||st===applicationCache.UPDATEREADY){
+          markCacheReadyAndInstall();
+        }
+      },300000);
     });
   })();
   </script>
