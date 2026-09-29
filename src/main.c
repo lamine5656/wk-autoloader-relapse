@@ -10,7 +10,7 @@
  * This file handles: process init, signal setup, MHD lifecycle, shutdown.
  */
 
-/* Release tree marker: v1.0.2. */
+/* Release tree marker: v1.0.3. */
 #include <errno.h>
 #include <fcntl.h>
 #include <microhttpd.h>

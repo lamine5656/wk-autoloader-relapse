@@ -41,11 +41,11 @@
     var statusEl=document.getElementById('status');
     var progressBar=document.getElementById('progressBar');
     var progressPct=document.getElementById('progressPct');
-    var completed=false,isDownloading=false,isRetry=false,currentUid='',simulateCorrupt=false,cacheRecoverStarted=false,probeOk=false,cacheReady=false;
+    var completed=false,isDownloading=false,currentUid='',probeOk=false,cacheReady=false;
     var AUTOLOADER_URL='/app/index.html';
     (function(){
       var p=new URLSearchParams(window.location.search);
-      isRetry=p.get('retry')==='1'; currentUid=p.get('uid')||''; simulateCorrupt=p.get('simulate')==='corrupt';
+      currentUid=p.get('uid')||'';
     })();
     function setProgress(pct){
       if(pct<0)pct=0; if(pct>100)pct=100;
@@ -106,36 +106,11 @@
       cacheReady=true;
       maybeInstall();
     }
-    /* Cache errors stay internal: auto clear+retry once. On retry failure do
-       not install an incomplete cache — that leaves a home icon with no page. */
-    function silentCacheRecover(){
-      if(cacheRecoverStarted) return;
-      cacheRecoverStarted=true;
-      if(isRetry){
-        statusEl.textContent='Cache failed — close and run installer again';
-        try{
-          var ex=new XMLHttpRequest();
-          ex.open('GET','/exit',true);
-          ex.send();
-        }catch(e){}
-        return;
-      }
-      setCaching();
-      var x=new XMLHttpRequest();
-      x.open('GET','/clear-webkit-data',true);
-      x.timeout=30000;
-      x.onreadystatechange=function(){
-        if(x.readyState===4 && x.status!==200){
-          statusEl.textContent='Cache clear failed — close and run installer again';
-        }
-      };
-      x.onerror=x.ontimeout=function(){
-        statusEl.textContent='Cache clear failed — close and run installer again';
-      };
-      x.send();
-    }
+    /* Never auto-clear WebKit during install — /clear-webkit-data wipes the
+       browser mid-cache and the ELF re-launches into a reopen loop. Clear Cache
+       stays on Pages only. On AppCache error/obsolete, keep waiting / retrying
+       update; do not show a blocking Cache failed banner. */
     window.addEventListener('load',function(){
-      if(simulateCorrupt){ isDownloading=true; silentCacheRecover(); return; }
       setCaching(); setProgress(2); probeServer();
       var soft=2;
       var softTimer=setInterval(function(){
@@ -154,8 +129,15 @@
       applicationCache.addEventListener('cached',function(){ markCacheReadyAndInstall(); },false);
       applicationCache.addEventListener('updateready',function(){ markCacheReadyAndInstall(); },false);
       applicationCache.addEventListener('noupdate',function(){ markCacheReadyAndInstall(); },false);
-      applicationCache.addEventListener('error',function(){ if(isDownloading) silentCacheRecover(); },false);
-      applicationCache.addEventListener('obsolete',function(){ silentCacheRecover(); },false);
+      applicationCache.addEventListener('error',function(){
+        isDownloading=false;
+        setCaching();
+        try{ applicationCache.update(); }catch(e){}
+      },false);
+      applicationCache.addEventListener('obsolete',function(){
+        setCaching();
+        try{ applicationCache.update(); }catch(e){}
+      },false);
       /* Force an update check so we do not treat pre-check IDLE as "done". */
       try{ applicationCache.update(); }catch(e){}
       /* Last-resort only: large Relapse tree can take several minutes. */
