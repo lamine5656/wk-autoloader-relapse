@@ -91,15 +91,15 @@ function resolveSymbols(p) {
   return resolved;
 }
 
-async function fetchBinary(name, base) {
-  base = base || "payloads/";
-  const response = await fetch(base + name);
+async function fetchBinary(name, payloadDir) {
+  payloadDir = payloadDir || "payloads/";
+  const response = await fetch(payloadDir + name);
   if (!response.ok) throw new Error("kexp: " + name + " returned HTTP " + response.status);
   return new Uint8Array(await response.arrayBuffer());
 }
 
-async function mapElf(name, p, chain, base) {
-  const elf = await fetchBinary(name, base);
+async function mapElf(name, p, chain, payloadDir) {
+  const elf = await fetchBinary(name, payloadDir);
   if (elf.length < 0x1000 || readU32(elf, 0) !== 0x464c457f)
     throw new Error("kexp: " + name + " is not an ELF");
 
@@ -155,12 +155,12 @@ async function sendElf(name, payload, p, chain) {
 }
 
 // WKAL: send ?autoload=<name> from the parent payloads dir to elfldr :9021.
-export async function sendAutoloadElf(name, base, p, chain, log) {
+export async function sendAutoloadElf(name, payloadDir, p, chain, log) {
   const say = typeof log === "function" ? log : () => {};
   if (!name) throw new Error("autoload: empty payload name");
-  base = base || "../payloads/";
-  say("autoload: mapping " + name + " from " + base);
-  const payload = await mapElf(name, p, chain, base);
+  payloadDir = payloadDir || "../payloads/";
+  say("autoload: mapping " + name + " from " + payloadDir);
+  const payload = await mapElf(name, p, chain, payloadDir);
   say("autoload: sending " + name + " (" + payload.size + " bytes) to elfldr :9021");
   await sendElf(name, payload, p, chain);
   say("autoload: sent " + name + " (" + payload.size + " bytes)");
