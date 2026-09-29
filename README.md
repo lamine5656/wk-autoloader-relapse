@@ -8,17 +8,13 @@ PS5 homebrew: jailbreak UI on port **1022**. Chains: **umtx2** (1–5.xx), **Rel
 
 <table>
   <tr>
-    <td align="center" width="33%">
+    <td align="center" width="50%">
       <img src="docs/screenshots/01-splash.jpg" alt="Splash — home screen" width="100%" /><br/>
       <sub><b>Splash</b> — home screen</sub>
     </td>
-    <td align="center" width="33%">
+    <td align="center" width="50%">
       <img src="docs/screenshots/02-progress.jpg" alt="Progress — jailbreak running" width="100%" /><br/>
       <sub><b>Progress</b> — jailbreak running</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/screenshots/03-meta.jpg" alt="Meta — FW and chain" width="100%" /><br/>
-      <sub><b>Meta</b> — FW 13.60 · Relapse</sub>
     </td>
   </tr>
 </table>
