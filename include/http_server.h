@@ -1,6 +1,6 @@
 #pragma once
 
-/* Release tree marker: v1.0.2. */
+/* Release tree marker: v1.0.3. */
 
 #include <microhttpd.h>
 #include <stdatomic.h>

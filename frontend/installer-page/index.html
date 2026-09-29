@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="preload" href="/installer-hero.jpg?v=023" as="image" />
+  <link rel="preload" href="/installer-hero.jpg?v=024" as="image" />
   <title>WK Autoloader v[[VERSION_PLACEHOLDER]]</title>
   <style>
     *{margin:0;padding:0;-webkit-box-sizing:border-box;box-sizing:border-box}
     html,body{height:100%}
     body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:#000;color:#2a9fff;min-height:100%;overflow:hidden;text-align:center}
-    #bg{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;background:#000 url("/installer-hero.jpg?v=023") center center/cover no-repeat}
+    #bg{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;background:#000 url("/installer-hero.jpg?v=024") center center/cover no-repeat}
     #bg:after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.38);pointer-events:none}
     main{position:relative;z-index:2;height:100%;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;-webkit-box-align:center;-webkit-align-items:center;align-items:center;-webkit-box-pack:start;-webkit-justify-content:flex-start;justify-content:flex-start;gap:12px;padding:46vh 24px 88px;background:transparent;box-sizing:border-box}
     #statusMsg{margin:0 0 8px;color:#fff;font-size:22px;font-weight:700;letter-spacing:.06em;text-shadow:0 0 12px rgba(255,255,255,.4)}
@@ -47,7 +47,8 @@
     var progressPct=document.getElementById('progressPct');
     var elapsedMsgEl=document.getElementById('elapsedMsg');
     var completed=false,installInFlight=false,currentUid='',probeOk=false;
-    var progressPctVal=0,progressTimer=0,elapsedTimer=0,elapsedStart=0;
+    var installOk=false,cacheOk=false;
+    var progressPctVal=0,progressTimer=0,elapsedTimer=0,elapsedStart=0,statusPoll=0;
     /* Same absolute target as assets/param.json deeplinkUri — home icon +
        post-install navigation both hit live :1022 /app while server stays up. */
     var AUTOLOADER_URL='http://127.0.0.1:1022/app/index.html';
@@ -85,6 +86,7 @@
       installInFlight=false;
       stopElapsed();
       if(progressTimer){ clearInterval(progressTimer); progressTimer=0; }
+      if(statusPoll){ clearInterval(statusPoll); statusPoll=0; }
       try{document.body.className='done'}catch(e){}
       var from=progressPctVal,start=Date.now();
       var anim=setInterval(function(){
@@ -93,8 +95,30 @@
         if(p>=1){ try{clearInterval(anim)}catch(eA){} setProgress(100); }
       },30);
     }
-    function setCaching(){ statusEl.textContent='Installing…'; }
+    function refreshStatus(){
+      if(completed) return;
+      if(installOk && !cacheOk){
+        statusEl.textContent='Finishing offline cache…';
+      } else {
+        statusEl.textContent='Installing…';
+      }
+    }
+    function setCaching(){ refreshStatus(); }
     function goToAutoloader(){ window.location.replace(AUTOLOADER_URL); }
+    /* Dual-gate: open /app only when BOTH /install 200 and AppCache ready.
+       Never soft-timeout into /app without cacheOk (aborts incomplete cache). */
+    function tryOpen(){
+      if(completed) return;
+      if(!(installOk && cacheOk)){ refreshStatus(); return; }
+      setInstalled();
+      setTimeout(goToAutoloader, 350);
+    }
+    function markCacheOk(){
+      if(cacheOk) return;
+      cacheOk=true;
+      if(statusPoll){ clearInterval(statusPoll); statusPoll=0; }
+      tryOpen();
+    }
     /* Best-effort /version for uid only — never gates /install. */
     function probeServer(){
       var xhr=new XMLHttpRequest();
@@ -109,34 +133,33 @@
       xhr.send();
     }
     function installApp(){
-      if(completed) return;
+      if(completed||installOk) return;
       if(installInFlight) return;
       installInFlight=true;
       setCaching();
       var xhr=new XMLHttpRequest();
-      /* Install can take ~30s on console; 30s timeout raced success and
-         blocked goToAutoloader / home-icon open. Allow 2 minutes. */
+      /* Install can take ~30s on console; 30s timeout raced success.
+         Allow 2 minutes. Do NOT navigate on 200 — wait for cacheOk. */
       xhr.open('GET','/install',true); xhr.timeout=120000;
       xhr.onreadystatechange=function(){
         if(xhr.readyState===4){
           installInFlight=false;
           if(xhr.status===200){
-            setInstalled();
-            /* Open the WK UI while :1022 is still up (server stays after install;
-               deeplinkUri in param.json is the same absolute /app URL). */
-            setTimeout(goToAutoloader, 350);
+            installOk=true;
+            tryOpen();
           } else {
-            completed=false; setCaching(); setTimeout(installApp,1500);
+            setCaching(); setTimeout(installApp,1500);
           }
         }
       };
       xhr.onerror=xhr.ontimeout=function(){
-        installInFlight=false; completed=false; setCaching(); setTimeout(installApp,1500);
+        installInFlight=false; setCaching(); setTimeout(installApp,1500);
       };
       xhr.send();
     }
     /* Soft fill: climb continuously to 97 while waiting OR installing —
-       NEVER hold at 88. HTTP 200 → setInstalled snaps to 100. */
+       NEVER hold at 88. Both gates → setInstalled snaps to 100.
+       Soft progress must NOT navigate without cacheOk. */
     var softPct=2;
     function startProgressDriver(){
       if(progressTimer) return;
@@ -159,22 +182,39 @@
       /* /install immediately — do not wait on /version or AppCache. */
       installApp();
       probeServer();
-      /* AppCache listeners: progress UI only. Do not start or delay
-         /install from these events. No swapCache. */
-      if(typeof applicationCache!=='undefined'){
+      /* AppCache: mark cacheOk on terminal success events. No swapCache.
+         Status poll backup for IDLE/UPDATEREADY. No soft-timeout → /app. */
+      if(typeof applicationCache==='undefined'){
+        cacheOk=true;
+        tryOpen();
+      } else {
         applicationCache.addEventListener('progress',function(e){
           if(e&&e.lengthComputable&&e.total>0){
             var p=Math.min(SOFT_CAP,8+Math.floor((e.loaded/e.total)*89));
             if(p>softPct) softPct=p;
             if(p>progressPctVal) setProgress(p);
           }
+          refreshStatus();
         },false);
+        applicationCache.addEventListener('cached',function(){ markCacheOk(); },false);
+        applicationCache.addEventListener('noupdate',function(){ markCacheOk(); },false);
+        applicationCache.addEventListener('updateready',function(){ markCacheOk(); },false);
         applicationCache.addEventListener('error',function(){
           setCaching();
         },false);
         applicationCache.addEventListener('obsolete',function(){
           setCaching();
         },false);
+        /* Short status poll backup — IDLE/UPDATEREADY mean cache settled. */
+        statusPoll=setInterval(function(){
+          if(completed||cacheOk){ clearInterval(statusPoll); statusPoll=0; return; }
+          try{
+            var st=applicationCache.status;
+            if(st===applicationCache.IDLE||st===applicationCache.UPDATEREADY){
+              markCacheOk();
+            }
+          }catch(e){}
+        },400);
       }
     });
   })();

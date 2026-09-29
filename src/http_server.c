@@ -1,4 +1,4 @@
-/* Release tree marker: v1.0.2. */
+/* Release tree marker: v1.0.3. */
 /*
  * HTTP Server - serves the cached frontend files from the generated file
  * registry and handles the /install route (installs the homescreen app once
