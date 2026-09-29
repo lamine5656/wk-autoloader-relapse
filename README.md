@@ -26,7 +26,9 @@ Current release: **[v1.0.0](https://github.com/X-F1REBALL-X/wk-autoloader-relaps
 3. Open the home icon or `http://PS5_IP:1022`.
 4. Pick **Payload Manager** (`:8084`) or **Elf Launcher** (`:1000`), then **Start Jailbreak**.
 
-Elf Launcher needs [elf-launcher-data.zip](https://github.com/X-F1REBALL-X/elf-launcher/releases/latest) unpacked to `/data/elf-launcher` (FTP, usually `2121`).
+## Elf Launcher
+
+For downloading and sending `elf-launcher.elf` via BinLoader (`elfldr`) on port `9021`, see the [Elf Launcher repository](https://github.com/X-F1REBALL-X/elf-launcher) and its [releases](https://github.com/X-F1REBALL-X/elf-launcher/releases). It is the companion UI bundled with WK Autoloader for loading ELF payloads.
 
 ## Firmware
 
