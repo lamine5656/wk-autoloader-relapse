@@ -48,4 +48,59 @@ Repo: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher)
 
 ## Credits
 
+<<<<<<< Updated upstream
 **X-F1REBALL-X**
+=======
+Thanks:
+
+- **Synacktiv** - UMTX kernel bug (CVE-2024-43102)
+- **fail0verflow** / **flatz** - UMTX exploit strategy
+- **TheFloW** - ExploitNetControlImpl (poops base)
+- **Gezine** / **egycnq** - poops; **Gezine** - p2jb
+- **abc** - PSFree (WebKit userland)
+- **shahrilnet** / **n0llptr** - UMTX Lua implementation
+- **SpecterDev** / **ChendoChap** - UMTX WebKit jailbreak work
+- **idlesauce** - umtx2
+- **cheburek3000** - p2jb Lua port
+- **Sonic** - pooP2JB
+- **jordyidk** - slopkit
+- **ufm42** - kexp
+- **John Tornblom** - ELF loader / payloads
+- **zecoxao** - support
+- **Yenyen** - support
+- **EchoStretch** - support
+- **PS5 R&D Discord** - support
+
+## Notes
+
+### Stability
+
+Sometimes the jailbreak can crash. Most of the time it runs fine. If it fails, restart the console and try again.
+
+(A light page refresh can also work sometimes. It can freeze or crash too - try what works for you.)
+
+### Block Sony updates (DNS)
+
+1. Settings > Network > Set Up Internet Connection.
+2. Use **Custom** setup.
+3. DNS Settings: **Manual**.
+4. Primary DNS: `62.210.38.117`
+5. Leave Secondary DNS empty.
+6. Save and test connection (fail to Sony is OK).
+
+DNS by **Nomadic** - blocks official system updates.
+
+
+### After jailbreak - elf-launcher UI
+
+Optional companion: [elf-launcher](https://github.com/X-F1REBALL-X/elf-launcher) (`v1.0.4`) home tile / `http://127.0.0.1:1000/`.
+
+- **Send** (English) loads an ELF into elfldr.
+- **Kill** appears on the row after a successful send / Active / Sent (PS5 + `:1000`).
+- **Update** (glowing) shows only when a local `/data/elf-launcher` file is missing or outdated vs the catalog; never a dead button. Hidden on GitHub Pages.
+
+### Releases
+
+- Keep only the current Release on GitHub.
+- Short English release notes (for example: System fixes).
+>>>>>>> Stashed changes
